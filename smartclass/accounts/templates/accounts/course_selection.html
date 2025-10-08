@@ -10,11 +10,11 @@
 </head>
 <body>
 <div class="container">
-    <!-- Back Button -->
+    <!-- Back Button 
     <a href="{% url 'student_dashboard' %}" class="back-button">
         <i class="fas fa-arrow-left"></i> Back
     </a>
-
+    -->
     <header>
         <h1>Hi {{ username }}, Choose your courses</h1>
         <p>Select your courses to unlock content and quizzes</p>
@@ -53,7 +53,7 @@
             <i class="fas fa-book"></i>
             <span>Courses</span>
         </a>
-        <a href="#" class="nav-link">
+        <a href="{% url 'quiz_selection_page' %}" class="nav-link">
             <i class="fas fa-question-circle"></i>
             <span>Quiz</span>
         </a>
@@ -70,60 +70,70 @@ const addBtn = document.getElementById('add-course-btn');
 const coursesGrid = document.getElementById('coursesGrid');
 const saveBtn = document.getElementById('save-courses-btn');
 
-// Initialize selectedCourses from server data
-let selectedCourses = new Set(JSON.parse('{{ user_courses|default:"[]"|safe }}'));
+// Initialize selectedCourses from server data (safe)
+let selectedCourses;
+try {
+    selectedCourses = new Set(JSON.parse('{{ user_courses_json|default:"[]"|escapejs }}'));
+} catch (e) {
+    console.error("Failed to parse user_courses_json:", e);
+    selectedCourses = new Set();
+}
 
-// Function to create course card
+// render helper
 function addCourseCard(code, text) {
     if (document.getElementById(code)) return; // prevent duplicates
-
     const card = document.createElement('div');
     card.className = 'quiz-option-card';
     card.id = code;
     card.innerHTML = `
         <h3>${text}</h3>
         <div class="course-status unlocked"><i class="fas fa-check"></i> Unlocked</div>
-        <button type="button" class="start-btn toggle-lock-btn">Lock</button>
+        <button type="button" class="start-btn remove-btn">Remove</button>
     `;
     coursesGrid.appendChild(card);
 
-    // Lock/Unlock logic
-    const lockBtn = card.querySelector('.toggle-lock-btn');
-    const status = card.querySelector('.course-status');
-    lockBtn.addEventListener('click', () => {
-        if (status.classList.contains('unlocked')) {
-            status.className = 'course-status locked';
-            status.innerHTML = '<i class="fas fa-lock"></i> Locked';
-            lockBtn.textContent = 'Unlock';
-        } else {
-            status.className = 'course-status unlocked';
-            status.innerHTML = '<i class="fas fa-check"></i> Unlocked';
-            lockBtn.textContent = 'Lock';
-        }
+    // Remove button
+    card.querySelector('.remove-btn').addEventListener('click', () => {
+        selectedCourses.delete(code);
+        card.remove();
     });
 
-    // Add to selectedCourses set
+    // Also keep the set up-to-date
     selectedCourses.add(code);
 }
 
-// Preload existing courses on page load
-selectedCourses.forEach(code => {
-    const option = courseSelect.querySelector(`option[value="${code}"]`);
-    const text = option ? option.text : code;
-    addCourseCard(code, text);
-});
+// initial render of saved courses
+function renderCourses() {
+    coursesGrid.innerHTML = "";
+    for (const code of selectedCourses) {
+        const option = courseSelect.querySelector(`option[value="${code}"]`);
+        const text = option ? option.text : code;
+        // create but do not re-add to set (addCourseCard will add, but it's ok)
+        const card = document.createElement('div');
+        card.className = 'quiz-option-card';
+        card.id = code;
+        card.innerHTML = `
+            <h3>${text}</h3>
+            <div class="course-status unlocked"><i class="fas fa-check"></i> Unlocked</div>
+            <button type="button" class="start-btn remove-btn">Remove</button>
+        `;
+        coursesGrid.appendChild(card);
+        card.querySelector('.remove-btn').addEventListener('click', () => {
+            selectedCourses.delete(code);
+            card.remove();
+        });
+    }
+}
+renderCourses();
 
-// Add course from dropdown
 addBtn.addEventListener('click', () => {
     const code = courseSelect.value;
     if (!code) return alert("Select a course!");
     if (selectedCourses.has(code)) return alert("Already added!");
-
     const text = courseSelect.options[courseSelect.selectedIndex].text;
     addCourseCard(code, text);
 });
 
-// Save selected courses without page reload
 saveBtn.addEventListener('click', async () => {
     const coursesArray = Array.from(selectedCourses);
     if (!coursesArray.length) return alert("Select at least one course!");
@@ -140,8 +150,14 @@ saveBtn.addEventListener('click', async () => {
 
         const data = await response.json();
         if (data.success) {
+            // data.courses contains authoritative DB list after save
+            // update local set to match server (prevents drift)
+            if (Array.isArray(data.courses)) {
+                selectedCourses = new Set(data.courses);
+            }
             alert(data.message || "Courses saved successfully!");
-            // Courses stay on page; user can continue adding
+            // redirect to selected-courses page
+            window.location.href = "{% url 'selected_courses_page' %}";
         } else {
             alert(data.message || "Something went wrong. Try again.");
         }

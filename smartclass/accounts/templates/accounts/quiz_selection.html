@@ -4,120 +4,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz Selection - Smart Class Performance Tracker</title>
+    <title>Quiz Selection - Smart Class</title>
     <link rel="stylesheet" href="{% static 'accounts/quiz-selection6.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-   <a href="{% url 'student_dashboard' %}" class="back-button">
-    <i class="fas fa-arrow-left"></i>
-   </a>
+<div class="container">
+    <header>
+        <h1>Hi {{ username }}, Let's start the assessment</h1>
+        <p>Select your course and topic to begin your quiz</p>
+    </header>
 
-        <header>
-            <h1>Hi {{ username }}, Let's start the assessment</h1>
-            <p>Select your course and topic to begin your quiz</p>
-        </header>
-
-        <div class="content-section">
-            <div class="selection-panel">
-                <div class="selection-group">
-                    <h2>Choose a course</h2>
-                    <div class="custom-select">
-                        <select id="course-select">
-                            <option value="" selected disabled>Select a course</option>
-                            {% for course in courses %}
-                                <option value="{{ course.id }}">{{ course.name }}</option>
-                            {% endfor %}
-                        </select>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                </div>
-
-                <div class="selection-group">
-                    <h2>Choose a topic</h2>
-                    <div class="custom-select">
-                        <select id="topic-select">
-                            <option value="" selected disabled>Select a topic</option>
-                            {% for topic in topics %}
-                                <option value="{{ topic.id }}">{{ topic.name }}</option>
-                            {% endfor %}
-                        </select>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                </div>
+    <!-- ----- Assessment Cards ----- -->
+    <div class="assessment-cards-wrapper">
+        <div class="assessment-cards">
+            <div class="card card-mcq">
+                <h3>MCQ</h3>
+                <ul>
+                    <li>20 MCQ</li>
+                    <li>Time Duration: 10 Minutes</li>
+                    <li>Marks: 20 (1 x 20)</li>
+                </ul>
             </div>
-
-            <div class="quiz-options">
-                <h2>Select quiz type</h2>
-                <div class="options-grid">
-                    {% for quiz_type in quiz_types %}
-                    <div class="quiz-option-card">
-                        <div class="quiz-icon">
-                            <i class="{{ quiz_type.icon }}"></i>
-                        </div>
-                        <h3>{{ quiz_type.title }}</h3>
-                        <ul>
-                            {% for detail in quiz_type.details %}
-                                <li>{{ detail }}</li>
-                            {% endfor %}
-                        </ul>
-                        <button class="start-btn" onclick="startQuiz('{{ quiz_type.slug }}')">
-                            Start {{ quiz_type.title }}
-                        </button>
-                    </div>
-                    {% endfor %}
-                </div>
+            <div class="card card-code">
+                <h3>Code</h3>
+                <ul>
+                    <li>2 Code Writing</li>
+                    <li>3 Output Tracing</li>
+                    <li>Time Duration: 1 Hour</li>
+                    <li>Marks: 35 (2 x 10) + (3 x 5)</li>
+                </ul>
             </div>
-
-            <div class="resources-section">
-                <h2>Learning Resources</h2>
-                {% for resource in resources %}
-                <div class="resource-card">
-                    <i class="fas fa-external-link-alt"></i>
-                    <div class="resource-info">
-                        <h3>{{ resource.title }}</h3>
-                        <p>{{ resource.desc }}</p>
-                    </div>
-                    <a href="{{ resource.url }}" target="_blank" class="resource-link">Visit Site</a>
-                </div>
-                {% endfor %}
+            <div class="card card-theory">
+                <h3>Theoretical<br>Question</h3>
+                <ul>
+                    <li>5 Short Questions</li>
+                    <li>2 Broad Questions</li>
+                    <li>Time Duration: 1 Hour</li>
+                    <li>Marks: 30 [(5 x 2) + (2 x 10)]</li>
+                </ul>
             </div>
-        </div>
-
-        <div class="navigation-footer">
-            <a href="{% url 'student_dashboard' %}" class="nav-link">
-                <i class="fas fa-home"></i>
-                <span>Home</span>
-            </a>
-            <a href="{% url 'course_selection_page' %}" class="nav-link">
-                <i class="fas fa-book"></i>
-                <span>Courses</span>
-            </a>
-            <a href="#" class="nav-link active">
-                <i class="fas fa-question-circle"></i>
-                <span>Quiz</span>
-            </a>
-            <a href="#" class="nav-link">
-                <i class="fas fa-cog"></i>
-                <span>Settings</span>
-            </a>
         </div>
     </div>
 
-<script>
-function startQuiz(typeSlug) {
-    const courseId = document.getElementById('course-select').value;
-    const topicId = document.getElementById('topic-select').value;
+    <div class="content-section">
+        <div class="selection-panel">
+            <div class="selection-group">
+                <h2>Choose a course</h2>
+                <div class="custom-select">
+                    <select id="course-select">
+                        <option value="" selected disabled>Select a course</option>
+                        {% for course in courses %}
+                            <option value="{{ course.id }}">{{ course.name }}</option>
+                        {% empty %}
+                            <option disabled>You are not enrolled in any courses</option>
+                        {% endfor %}
+                    </select>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
 
-    if (!courseId || !topicId) {
-        alert("Please select a course and a topic!");
-        return;
+            <div class="selection-group">
+                <h2>Choose a topic</h2>
+                <div class="custom-select">
+                    <select id="topic-select">
+                        <option value="" selected disabled>Select a topic</option>
+                    </select>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="navigation-footer">
+        <a href="{% url 'student_dashboard' %}" class="nav-link">
+            <i class="fas fa-home"></i><span>Home</span>
+        </a>
+        <a href="{% url 'course_selection_page' %}" class="nav-link">
+            <i class="fas fa-book"></i><span>Courses</span>
+        </a>
+        <a href="#" class="nav-link active">
+            <i class="fas fa-question-circle"></i><span>Quiz</span>
+        </a>
+        <a href="#" class="nav-link">
+            <i class="fas fa-cog"></i><span>Settings</span>
+        </a>
+    </div>
+</div>
+
+<!-- Correct usage of json_script -->
+{{ course_topics|json_script:"course-topics" }}
+
+<script>
+    // Parse the embedded JSON safely
+    let courseTopics;
+    try {
+        courseTopics = JSON.parse(document.getElementById('course-topics').textContent);
+        console.log("Loaded courseTopics:", courseTopics);
+    } catch (e) {
+        console.error("Failed to parse courseTopics JSON:", e);
+        courseTopics = {};
     }
 
-    // Redirect to quiz page dynamically
-    window.location.href = `/accounts/quiz/${typeSlug}/?course=${courseId}&topic=${topicId}`;
-}
+    const courseSelect = document.getElementById('course-select');
+    const topicSelect = document.getElementById('topic-select');
+
+    courseSelect.addEventListener('change', function() {
+        const selectedCourseId = this.value;
+        console.log("Selected course id:", selectedCourseId);
+
+        // Clear previous topics
+        topicSelect.innerHTML = '<option value="" selected disabled>Select a topic</option>';
+
+        // Handle type mismatch: key could be string or number
+        let topics = courseTopics[selectedCourseId] || courseTopics[parseInt(selectedCourseId)];
+        console.log("Topics for selected course:", topics);
+
+        if (topics && Array.isArray(topics)) {
+            topics.forEach(topic => {
+                const option = document.createElement('option');
+                option.value = topic.id;
+                option.textContent = topic.name;
+                topicSelect.appendChild(option);
+            });
+        }
+    });
 </script>
+
 </body>
 </html>

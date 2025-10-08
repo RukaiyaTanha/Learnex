@@ -18,8 +18,7 @@ urlpatterns = [
     path("quiz-selection/", views.quiz_selection_page, name="quiz_selection_page"),
     path('profile/', views.profile_page, name='profile_page'),
     path("profile/edit/", views.profile_edit, name="profile_edit"),
- 
-
+    path('selected-courses/', views.selected_courses_page, name='selected_courses_page'),
     # ✅ password reset
     path('reset-password/<uidb64>/<token>/', views.reset_password_page, name='reset_password_page'),
     path('reset-password-api/', views.reset_password_api, name='reset_password_api'),

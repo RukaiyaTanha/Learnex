@@ -13,6 +13,7 @@ from django.shortcuts import render, redirect
 from django.core.mail import EmailMultiAlternatives
 from .models import CustomUser
 from django.urls import reverse
+import json as pyjson
 import json
 
 User = get_user_model()
@@ -120,50 +121,89 @@ def save_courses_api(request):
         try:
             data = json.loads(request.body)
             selected_codes = data.get("courses", [])
-
-            if not selected_codes:
-                return JsonResponse({"success": False, "message": "No courses selected"})
+            if not isinstance(selected_codes, list):
+                return JsonResponse({"success": False, "message": "Invalid courses data"})
 
             user = request.user
 
-            # Only add courses that the user hasn't already selected
-            for code in selected_codes:
-                try:
-                    course = Course.objects.get(code=code)
-                    # get_or_create ensures no duplicates
-                    UserCourse.objects.get_or_create(user=user, course=course)
-                except Course.DoesNotExist:
-                    return JsonResponse({"success": False, "message": f"Course '{code}' not found"})
+            # Get all courses in DB for these codes
+            all_courses = Course.objects.filter(code__in=selected_codes)
 
-            return JsonResponse({"success": True, "message": "Courses saved successfully"})
+            # --- Add new courses ---
+            added = []
+            for course in all_courses:
+                uc, created = UserCourse.objects.get_or_create(user=user, course=course)
+                if created:
+                    added.append(course.code)
 
+            # --- Remove courses that are not selected ---
+            removed = []
+            user_courses_qs = UserCourse.objects.filter(user=user)
+            for uc in user_courses_qs:
+                if uc.course.code not in selected_codes:
+                    removed.append(uc.course.code)
+                    uc.delete()
+
+            # Return the authoritative current list from DB
+            current = list(UserCourse.objects.filter(user=user).values_list('course__code', flat=True))
+
+            return JsonResponse({
+                "success": True,
+                "message": f"Added {len(added)} course(s), removed {len(removed)} course(s).",
+                "courses": current
+            })
         except Exception as e:
             return JsonResponse({"success": False, "message": str(e)})
 
     return JsonResponse({"success": False, "message": "Invalid request"})
 
+
+
 @login_required(login_url='/accounts/login-page/')
 def course_selection_page(request):
     user = request.user
     courses = Course.objects.all()
-    user_courses = UserCourse.objects.filter(user=user).values_list('course__code', flat=True)
+    # list of codes currently saved for this user
+    user_courses_qs = UserCourse.objects.filter(user=user).values_list('course__code', flat=True)
+    user_courses = list(user_courses_qs)
 
     context = {
         "courses": courses,
-        "user_courses": list(user_courses),
+        "user_courses": user_courses,                     # Python list for template use if needed
+        "user_courses_json": pyjson.dumps(user_courses),  # JSON string safe for embedding
         "username": user.username,
     }
     return render(request, "accounts/course_selection.html", context)
 
 @login_required(login_url='/accounts/login-page/')
+def selected_courses_page(request):
+    user_courses = UserCourse.objects.filter(user=request.user).select_related('course')
+    return render(request, 'accounts/selected_courses.html', {
+        'username': request.user.username,
+        'user_courses': user_courses,
+    })
+
+@login_required(login_url='/accounts/login-page/')
 def quiz_selection_page(request):
-    courses = Course.objects.all()
-    topics = Topic.objects.all()  # Or filter by selected course dynamically later
+    user = request.user
+
+    # Only courses the user is enrolled in
+    enrolled_courses = Course.objects.filter(usercourse__user=user)
+
+    # Build course_topics dict with string keys for JS
+    course_topics = {}
+    for course in enrolled_courses:
+        course_topics[str(course.id)] = [
+            {"id": topic.id, "name": topic.name}
+            for topic in course.topics.all()  # related_name="topics" in Topic FK
+        ]
+
     context = {
-        "courses": courses,
-        "topics": topics,
+        'username': user.username,
+        'courses': enrolled_courses,
+        'course_topics': course_topics
     }
-    return render(request, "accounts/quiz_selection.html", context)
+    return render(request, 'accounts/quiz_selection.html', context)
 
 # Forgot Password API
 @csrf_exempt

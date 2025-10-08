@@ -1,0 +1,123 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Selection - Smart Class Performance Tracker</title>
+    <link rel="stylesheet" href="{% static 'accounts/quiz-selection6.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+   <a href="{% url 'student_dashboard' %}" class="back-button">
+    <i class="fas fa-arrow-left"></i>
+   </a>
+
+        <header>
+            <h1>Hi {{ username }}, Let's start the assessment</h1>
+            <p>Select your course and topic to begin your quiz</p>
+        </header>
+
+        <div class="content-section">
+            <div class="selection-panel">
+                <div class="selection-group">
+                    <h2>Choose a course</h2>
+                    <div class="custom-select">
+                        <select id="course-select">
+                            <option value="" selected disabled>Select a course</option>
+                            {% for course in courses %}
+                                <option value="{{ course.id }}">{{ course.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+
+                <div class="selection-group">
+                    <h2>Choose a topic</h2>
+                    <div class="custom-select">
+                        <select id="topic-select">
+                            <option value="" selected disabled>Select a topic</option>
+                            {% for topic in topics %}
+                                <option value="{{ topic.id }}">{{ topic.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quiz-options">
+                <h2>Select quiz type</h2>
+                <div class="options-grid">
+                    {% for quiz_type in quiz_types %}
+                    <div class="quiz-option-card">
+                        <div class="quiz-icon">
+                            <i class="{{ quiz_type.icon }}"></i>
+                        </div>
+                        <h3>{{ quiz_type.title }}</h3>
+                        <ul>
+                            {% for detail in quiz_type.details %}
+                                <li>{{ detail }}</li>
+                            {% endfor %}
+                        </ul>
+                        <button class="start-btn" onclick="startQuiz('{{ quiz_type.slug }}')">
+                            Start {{ quiz_type.title }}
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="resources-section">
+                <h2>Learning Resources</h2>
+                {% for resource in resources %}
+                <div class="resource-card">
+                    <i class="fas fa-external-link-alt"></i>
+                    <div class="resource-info">
+                        <h3>{{ resource.title }}</h3>
+                        <p>{{ resource.desc }}</p>
+                    </div>
+                    <a href="{{ resource.url }}" target="_blank" class="resource-link">Visit Site</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="navigation-footer">
+            <a href="{% url 'student_dashboard' %}" class="nav-link">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
+            <a href="{% url 'course_selection_page' %}" class="nav-link">
+                <i class="fas fa-book"></i>
+                <span>Courses</span>
+            </a>
+            <a href="#" class="nav-link active">
+                <i class="fas fa-question-circle"></i>
+                <span>Quiz</span>
+            </a>
+            <a href="#" class="nav-link">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+        </div>
+    </div>
+
+<script>
+function startQuiz(typeSlug) {
+    const courseId = document.getElementById('course-select').value;
+    const topicId = document.getElementById('topic-select').value;
+
+    if (!courseId || !topicId) {
+        alert("Please select a course and a topic!");
+        return;
+    }
+
+    // Redirect to quiz page dynamically
+    window.location.href = `/accounts/quiz/${typeSlug}/?course=${courseId}&topic=${topicId}`;
+}
+</script>
+</body>
+</html>

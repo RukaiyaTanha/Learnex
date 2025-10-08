@@ -1,0 +1,156 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Selection - Smart Class Performance Tracker</title>
+    <link rel="stylesheet" href="{% static 'accounts/course-selection.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="container">
+    <!-- Back Button -->
+    <a href="{% url 'student_dashboard' %}" class="back-button">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+
+    <header>
+        <h1>Hi {{ username }}, Choose your courses</h1>
+        <p>Select your courses to unlock content and quizzes</p>
+    </header>
+
+    <div class="content-section">
+        <div class="selection-panel">
+            <div class="selection-group">
+                <h2>Select a course</h2>
+                <div class="custom-select">
+                    <select id="course-select">
+                        <option value="" selected disabled>Select a course</option>
+                        {% for course in courses %}
+                            <option value="{{ course.code }}">{{ course.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <button id="add-course-btn" class="start-btn">Add Course</button>
+            </div>
+        </div>
+
+        <div class="courses-grid" id="coursesGrid">
+            <!-- Selected courses will appear here as cards -->
+        </div>
+
+        <button id="save-courses-btn" class="start-btn">Save & Continue</button>
+    </div>
+
+    <div class="navigation-footer">
+        <a href="{% url 'student_dashboard' %}" class="nav-link">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="{% url 'course_selection_page' %}" class="nav-link active">
+            <i class="fas fa-book"></i>
+            <span>Courses</span>
+        </a>
+        <a href="#" class="nav-link">
+            <i class="fas fa-question-circle"></i>
+            <span>Quiz</span>
+        </a>
+        <a href="#" class="nav-link">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+        </a>
+    </div>
+</div>
+
+<script>
+const courseSelect = document.getElementById('course-select');
+const addBtn = document.getElementById('add-course-btn');
+const coursesGrid = document.getElementById('coursesGrid');
+const saveBtn = document.getElementById('save-courses-btn');
+
+// Initialize selectedCourses from server data
+let selectedCourses = new Set(JSON.parse('{{ user_courses|default:"[]"|safe }}'));
+
+// Function to create course card
+function addCourseCard(code, text) {
+    if (document.getElementById(code)) return; // prevent duplicates
+
+    const card = document.createElement('div');
+    card.className = 'quiz-option-card';
+    card.id = code;
+    card.innerHTML = `
+        <h3>${text}</h3>
+        <div class="course-status unlocked"><i class="fas fa-check"></i> Unlocked</div>
+        <button type="button" class="start-btn toggle-lock-btn">Lock</button>
+    `;
+    coursesGrid.appendChild(card);
+
+    // Lock/Unlock logic
+    const lockBtn = card.querySelector('.toggle-lock-btn');
+    const status = card.querySelector('.course-status');
+    lockBtn.addEventListener('click', () => {
+        if (status.classList.contains('unlocked')) {
+            status.className = 'course-status locked';
+            status.innerHTML = '<i class="fas fa-lock"></i> Locked';
+            lockBtn.textContent = 'Unlock';
+        } else {
+            status.className = 'course-status unlocked';
+            status.innerHTML = '<i class="fas fa-check"></i> Unlocked';
+            lockBtn.textContent = 'Lock';
+        }
+    });
+
+    // Add to selectedCourses set
+    selectedCourses.add(code);
+}
+
+// Preload existing courses on page load
+selectedCourses.forEach(code => {
+    const option = courseSelect.querySelector(`option[value="${code}"]`);
+    const text = option ? option.text : code;
+    addCourseCard(code, text);
+});
+
+// Add course from dropdown
+addBtn.addEventListener('click', () => {
+    const code = courseSelect.value;
+    if (!code) return alert("Select a course!");
+    if (selectedCourses.has(code)) return alert("Already added!");
+
+    const text = courseSelect.options[courseSelect.selectedIndex].text;
+    addCourseCard(code, text);
+});
+
+// Save selected courses without page reload
+saveBtn.addEventListener('click', async () => {
+    const coursesArray = Array.from(selectedCourses);
+    if (!coursesArray.length) return alert("Select at least one course!");
+
+    try {
+        const response = await fetch("{% url 'save_courses_api' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({ courses: coursesArray })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            alert(data.message || "Courses saved successfully!");
+            // Courses stay on page; user can continue adding
+        } else {
+            alert(data.message || "Something went wrong. Try again.");
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Server error, try again.");
+    }
+});
+</script>
+
+</body>
+</html>

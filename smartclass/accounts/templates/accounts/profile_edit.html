@@ -1,0 +1,68 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Profile</title>
+<link rel="stylesheet" href="{% static 'accounts/profile_edit.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="container">
+    <div class="top-bar">
+        <h1>Edit Profile</h1>
+        <a href="{% url 'profile_page' %}" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
+    </div>
+
+    <div class="profile-avatar">
+        <i class="fas fa-user-circle"></i>
+    </div>
+
+    <form id="editProfileForm" method="POST">
+        {% csrf_token %}
+        
+        <label>Username</label>
+        <input type="text" id="username" value="{{ username }}" required>
+
+        <label>Email</label>
+        <input type="email" id="email" value="{{ email }}" required>
+
+        <label>Role</label>
+        <input type="text" value="{{ role }}" disabled>
+
+        <button type="submit" class="save-btn">Save Changes</button>
+        <p id="message" class="message"></p>
+    </form>
+</div>
+
+<script>
+document.getElementById("editProfileForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const data = {
+        username: document.getElementById("username").value,
+        email: document.getElementById("email").value,
+    };
+
+    const res = await fetch("{% url 'update_profile_api' %}", {
+        method: "POST",
+        headers: { 
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify(data)
+    });
+
+    const json = await res.json();
+    const msg = document.getElementById("message");
+    msg.textContent = json.message;
+    msg.style.color = json.success ? "green" : "red";
+
+    if (json.success) {
+        setTimeout(() => {
+            window.location.href = "{% url 'profile_page' %}";
+        }, 1000);
+    }
+});
+</script>

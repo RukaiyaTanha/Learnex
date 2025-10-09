@@ -42,3 +42,37 @@ class Topic(models.Model):
 
     def __str__(self):
         return f"{self.course.name} - {self.name}"
+    
+    # ---------- Question ----------
+class Question(models.Model):
+    TYPE_CHOICES = [
+        ('mcq', 'MCQ'),
+        ('scenario-mcq', 'Scenario MCQ'),
+        ('code', 'Code'),
+        ('theory', 'Theory'),
+    ]
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
+    q_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    question_text = models.TextField()
+    options = models.JSONField(blank=True, null=True)  # {"a":"Option 1","b":"Option 2"...}
+    answer = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.course.name} - {self.topic.name} - {self.q_type}"
+    
+     # ---------- Marks ----------
+class Marks(models.Model):
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    course = models.ForeignKey('Course', on_delete=models.CASCADE)
+    quiz1 = models.FloatField(default=0)
+    quiz2 = models.FloatField(default=0)
+    quiz3 = models.FloatField(default=0)
+    attendance = models.FloatField(default=0)
+    assignment = models.FloatField(default=0)
+    presentation = models.FloatField(default=0)
+    termexam = models.FloatField(default=0)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.student.username} - {self.course.name}" 

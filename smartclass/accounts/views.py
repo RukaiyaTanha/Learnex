@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.contrib.auth import get_user_model, authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
-from .models import Course, UserCourse,Topic
+from .models import Course, UserCourse,Topic, Question,Marks
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
@@ -14,6 +14,7 @@ from django.core.mail import EmailMultiAlternatives
 from .models import CustomUser
 from django.urls import reverse
 import json as pyjson
+from difflib import SequenceMatcher
 import json
 
 User = get_user_model()
@@ -183,27 +184,58 @@ def selected_courses_page(request):
         'user_courses': user_courses,
     })
 
+# ---------- Quiz Selection ----------
 @login_required(login_url='/accounts/login-page/')
 def quiz_selection_page(request):
     user = request.user
-
-    # Only courses the user is enrolled in
     enrolled_courses = Course.objects.filter(usercourse__user=user)
 
-    # Build course_topics dict with string keys for JS
-    course_topics = {}
-    for course in enrolled_courses:
-        course_topics[str(course.id)] = [
-            {"id": topic.id, "name": topic.name}
-            for topic in course.topics.all()  # related_name="topics" in Topic FK
-        ]
+    course_topics = {str(course.id): [{"id": t.id, "name": t.name} for t in course.topics.all()] for course in enrolled_courses}
 
     context = {
-        'username': user.username,
-        'courses': enrolled_courses,
-        'course_topics': course_topics
+        "username": user.username,
+        "courses": enrolled_courses,
+        "course_topics": course_topics,
     }
-    return render(request, 'accounts/quiz_selection.html', context)
+    return render(request, "accounts/quiz_selection.html", context)
+
+# ---------- Start Quiz ----------
+@login_required(login_url='/accounts/login-page/')
+def start_quiz(request, course_id, topic_id, quiz_type):
+    try:
+        course = Course.objects.get(id=course_id)
+        topic = Topic.objects.get(id=topic_id, course=course)
+    except (Course.DoesNotExist, Topic.DoesNotExist):
+        return render(request, "accounts/quiz_invalid.html", {"message": "Invalid course or topic."})
+
+    questions = Question.objects.filter(course=course, topic=topic, q_type=quiz_type)
+
+    context = {
+        "username": request.user.username,
+        "course": course,
+        "topic": topic,
+        "type": quiz_type,
+        "questions": questions,
+    }
+    return render(request, "accounts/quiz_page.html", context)
+
+# ---------- Submit Quiz ----------
+@login_required(login_url='/accounts/login-page/')
+def submit_quiz(request):
+    if request.method == "POST":
+        score = 0
+        total = 0
+        for key, value in request.POST.items():
+            if key.startswith("q_"):
+                qid = int(key.split("_")[1])
+                try:
+                    question = Question.objects.get(id=qid)
+                    total += 1
+                    if question.answer == value:
+                        score += 1
+                except Question.DoesNotExist:
+                    continue
+        return render(request, "accounts/quiz_result.html", {"score": score, "total": total})
 
 # Forgot Password API
 @csrf_exempt
@@ -333,3 +365,266 @@ def update_profile_api(request):
             return JsonResponse({"success": False, "message": str(e)})
 
     return JsonResponse({"success": False, "message": "Invalid request"})
+
+# ---------- Quiz page ----------
+
+@login_required(login_url='/accounts/login-page/')
+def quiz_page(request, course_id, topic_id, type):
+    try:
+        course = Course.objects.get(id=course_id)
+        topic = Topic.objects.get(id=topic_id, course=course)
+    except (Course.DoesNotExist, Topic.DoesNotExist):
+        return render(request, "accounts/quiz_invalid.html", {"message": "Invalid course or topic selected."})
+
+    # Hardcoded questions with time_duration and marks per quiz type
+    all_questions = {
+        "6": {  # Course: Differential
+            "94": {  # Topic: Limits
+                "mcq": {
+                    "time_duration": "15 Minutes",
+                    "marks": 20,
+                    "questions": [
+                        {"question": f"What is the limit of x approaching {i+1} for f(x)?",
+                         "options": [str(j) for j in range(i, i+4)], "answer": str(i+2)}
+                        for i in range(20)
+                    ]
+                },
+                "scenario-mcq": {
+                    "time_duration": "20 Minutes",
+                    "marks": 20,
+                    "questions": [
+                        {"question": f"Function behavior analysis. What is the correct limit?",
+                         "options": ["0", "1", "Infinity", "-Infinity"], "answer": "1"}
+                        for i in range(20)
+                    ]
+                },
+                "code": {
+                    "time_duration": "1 Hour",
+                    "marks": 35,
+                    "questions": [
+                        {"question": "Write Python function to compute limit of f(x) = x^2 - 1 as x -> 1.", "options": [], "answer": ""},
+                        {"question": "Write Python code to find the limit of sin(x)/x as x -> 0.", "options": [], "answer": ""},
+                        {"question": "Trace the output:\nfor i in range(3):\n    print(i**2)", "options": [], "answer": "0 1 4"},
+                        {"question": "Trace the output:\na = [1,2,3]\nprint(a[-1])", "options": [], "answer": "3"},
+                        {"question": "Trace the output:\nprint(len('limit'))", "options": [], "answer": "5"},
+                    ]
+                },
+                "theory": {
+                    "time_duration": "45 Minutes",
+                    "marks": 30,
+                    "questions": [
+                        {"question": "Short Question 1: Define the concept of limit in calculus.", "options": [], "answer": ""},
+                        {"question": "Short Question 2: What is a left-hand limit?", "options": [], "answer": ""},
+                        {"question": "Short Question 3: What is a right-hand limit?", "options": [], "answer": ""},
+                        {"question": "Short Question 4: State limit laws.", "options": [], "answer": ""},
+                        {"question": "Short Question 5: Explain continuity at a point.", "options": [], "answer": ""},
+                        {"question": "Broad Question 1: Discuss how limits are used to find derivatives.", "options": [], "answer": ""},
+                        {"question": "Broad Question 2: Solve a real-world problem using limits.", "options": [], "answer": ""},
+                    ]
+                },
+            }
+        },
+        "1": {  # Course: Web Technology
+            "84": {  # Topic: HTML Basics
+                "mcq": {
+                    "time_duration": "15 Minutes",
+                    "marks": 15,
+                    "questions": [
+                        {"question": f"Which HTML tag is used for {['paragraph', 'heading', 'link', 'image'][i%4]}?",
+                         "options": ["<p>", "<h1>", "<a>", "<img>"], "answer": ["<p>", "<h1>", "<a>", "<img>"][i%4]}
+                        for i in range(10)
+                    ]
+                },
+                "scenario-mcq": {
+                    "time_duration": "20 Minutes",
+                    "marks": 20,
+                    "questions": [
+                        {"question": f"You want to display an image on a webpage. Which tag should you use?",
+                         "options": ["<p>", "<img>", "<div>", "<span>"], "answer": "<img>"}
+                        for i in range(5)
+                    ]
+                },
+                "code": {
+                    "time_duration": "1 Hour",
+                    "marks": 35,
+                    "questions": [
+                        {"question": "Write the HTML code to create a hyperlink to https://example.com", "options": [], "answer": "<a href='https://example.com'>Link</a>"},
+                        {"question": "Write the HTML code to create an ordered list with 3 items", "options": [], "answer": "<ol><li>Item1</li><li>Item2</li><li>Item3</li></ol>"},
+                    ]
+                },
+                "theory": {
+                    "time_duration": "45 Minutes",
+                    "marks": 30,
+                    "questions": [
+                        {"question": "Define what HTML is.", "options": [], "answer": ""},
+                        {"question": "Explain the difference between <div> and <span>.", "options": [], "answer": ""},
+                        {"question": "List some commonly used HTML tags.", "options": [], "answer": ""},
+                    ]
+                },
+            }
+        }
+    }
+
+    quiz_data = all_questions.get(str(course_id), {}).get(str(topic_id), {}).get(type, {})
+    questions = quiz_data.get("questions", [])
+    time_duration = quiz_data.get("time_duration", "N/A")
+    marks = quiz_data.get("marks", "N/A")
+
+     # ----------- ✅ When user submits the quiz -----------
+    if request.method == "POST":
+        user_answers = {}
+        correct_count = 0
+        results = []
+
+        for i, q in enumerate(questions, start=1):
+            selected = request.POST.get(f'answer_{i}')
+            correct = q["answer"]
+            is_correct = (selected == correct)
+
+            user_answers[i] = selected
+            if is_correct:
+                correct_count += 1
+
+            results.append({
+                "question": q["question"],
+                "options": q["options"],
+                "selected": selected,
+                "correct": correct,
+                "is_correct": is_correct,
+            })
+
+        total_score = correct_count
+        performance_rate = round((correct_count / len(questions)) * 100, 2)
+
+        # 🧠 Simple AI-like analysis
+        weak_areas = "Conceptual misunderstanding" if performance_rate < 70 else "Minor errors"
+        improvement = (
+            "Review weak topics and practice more timed quizzes."
+            if performance_rate < 80 else
+            "Excellent work! Keep your consistency."
+        )
+        prediction = (
+            "Performance expected to improve with continued study."
+            if performance_rate < 75 else
+            "Strong performance trend likely to continue."
+        )
+
+        context = {
+            "course": course,
+            "topic": topic,
+            "type": type,
+            "total_score": total_score,
+            "performance_rate": performance_rate,
+            "weak_areas": weak_areas,
+            "improvement": improvement,
+            "prediction": prediction,
+            "results": results,
+        }
+        return render(request, "accounts/quiz_result.html", context)
+
+    # ----------- When quiz page is first loaded -----------
+    context = {
+        "username": request.user.username,
+        "course": course,
+        "topic": topic,
+        "type": type,
+        "questions": questions,
+        "time_duration": time_duration,
+        "marks": marks,
+    }
+    return render(request, "accounts/quiz_page.html", context)
+#
+def evaluate_answer(user_answer, correct_answer, keywords=[]):
+    """
+    Evaluate theory/code answers using similarity and keyword match.
+    Returns (is_correct: bool, feedback: str)
+    """
+    if not user_answer:
+        return False, "Not answered"
+
+    user_answer = user_answer.strip().lower()
+    correct_answer = correct_answer.strip().lower()
+
+    # Similarity check
+    similarity = SequenceMatcher(None, user_answer, correct_answer).ratio()
+
+    # Keyword check
+    keyword_hits = sum(1 for k in keywords if k.lower() in user_answer)
+    keyword_score = keyword_hits / len(keywords) if keywords else 0
+
+    # Use whichever is higher
+    score = max(similarity, keyword_score)
+
+    if score > 0.7:
+        return True, "Mostly correct"
+    elif score > 0.4:
+        return False, "Partially correct"
+    else:
+        return False, "Incorrect"
+#
+def ai_quiz_analysis(results):
+    total = len(results)
+    correct_count = sum(1 for r in results if r["is_correct"])
+    performance_rate = round((correct_count / total) * 100, 2)
+
+    theory_incorrect = [r for r in results if r["question_type"] in ["theory", "code"] and not r["is_correct"]]
+    mcq_incorrect = [r for r in results if r["question_type"] == "mcq" and not r["is_correct"]]
+
+    weak_areas_list = []
+    if theory_incorrect:
+        weak_areas_list.append("Conceptual understanding in theory/code questions")
+    if mcq_incorrect:
+        weak_areas_list.append("Multiple-choice knowledge gaps")
+    if not weak_areas_list:
+        weak_areas_list.append("Minor mistakes")
+
+    weak_areas = ", ".join(weak_areas_list)
+
+    if performance_rate < 50:
+        improvement = "Focus on revising fundamental concepts and practice more questions."
+    elif performance_rate < 80:
+        improvement = "Review weak topics and take targeted practice quizzes."
+    else:
+        improvement = "Excellent work! Keep practicing to maintain consistency."
+
+    if performance_rate < 60:
+        prediction = "Performance may improve significantly with focused study."
+    elif performance_rate < 85:
+        prediction = "Steady improvement expected with continued practice."
+    else:
+        prediction = "Strong performance trend likely to continue."
+
+    return weak_areas, improvement, prediction, performance_rate
+
+#Upload marks
+@login_required(login_url='/accounts/login-page/')
+def upload_marks_page(request):
+    user = request.user
+    courses = Course.objects.filter(usercourse__user=user)  # only enrolled courses
+    return render(request, "accounts/upload_marks.html", {"username": user.username, "courses": courses})
+
+
+@login_required(login_url='/accounts/login-page/')
+@csrf_exempt
+def upload_marks_api(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        student = request.user  # assuming logged in
+        course = Course.objects.get(id=data['course_id'])
+
+        marks, created = Marks.objects.update_or_create(
+            student=student,
+            course=course,
+            defaults={
+                "quiz1": data.get("quiz1", 0),
+                "quiz2": data.get("quiz2", 0),
+                "quiz3": data.get("quiz3", 0),
+                "attendance": data.get("attendance", 0),
+                "assignment": data.get("assignment", 0),
+                "presentation": data.get("presentation", 0),
+                "termexam": data.get("termexam", 0),
+            },
+        )
+
+        return JsonResponse({"success": True, "message": "Marks saved successfully!"})
+    return JsonResponse({"error": "Invalid request"}, status=400)

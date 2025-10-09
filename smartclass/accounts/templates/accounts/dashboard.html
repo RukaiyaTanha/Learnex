@@ -47,10 +47,12 @@
 </div>
 
     <div class="dashboard-card">
+    <a href="{% url 'upload_marks_page' %}" class="card-link">
         <div class="card-icon"><i class="fas fa-chart-line"></i></div>
         <h3>Upload your class marks</h3>
         <p>Track your academic performance over time</p>
         <div class="card-action"><span>Let's go</span><i class="fas fa-arrow-right"></i></div>
+    </a>
     </div>
 
     <div class="dashboard-card">
@@ -76,7 +78,7 @@
 </div>
     <div class="navigation-footer">
         <a href="#" class="nav-link"><i class="fas fa-home"></i><span>Home</span></a>
-        <a href="#" class="nav-link"><i class="fas fa-book"></i><span>Courses</span></a>
+        <a href="{% url 'quiz_selection_page' %}" class="nav-link"><i class="fas fa-book"></i><span>Courses</span></a>
         <a href="#" class="nav-link"><i class="fas fa-chart-bar"></i><span>Progress</span></a>
         <a href="#" class="nav-link"><i class="fas fa-cog"></i><span>Settings</span></a>
     </div>

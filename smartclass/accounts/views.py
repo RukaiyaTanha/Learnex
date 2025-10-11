@@ -1,20 +1,23 @@
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse,FileResponse
 from django.contrib.auth import get_user_model, authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
-from .models import Course, UserCourse,Topic, Question,Marks
+from .models import Course, UserCourse,Topic, Question,Marks,Syllabus
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
-from django.shortcuts import render, redirect 
+from django.shortcuts import render, redirect, get_object_or_404
 from django.core.mail import EmailMultiAlternatives
 from .models import CustomUser
 from django.urls import reverse
 import json as pyjson
 from difflib import SequenceMatcher
+from django.contrib import messages
+from django.views.decorators.http import require_POST
+import mimetypes
 import json
 
 User = get_user_model()
@@ -28,6 +31,8 @@ def register(request):
         password = data.get('password')
         role = data.get('role')
         username = data.get('name')
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
 
         if not email or not password or not role or not username:
             return JsonResponse({"success": False, "message": "Missing fields"})
@@ -37,6 +42,8 @@ def register(request):
 
         user = User.objects.create_user(
             username=username,
+            first_name=first_name,
+            last_name=last_name,
             email=email,
             password=password,
             role=role
@@ -318,6 +325,8 @@ def profile_page(request):
     user = request.user
     context = {
         "username": user.username,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
         "role": getattr(user, "role", "N/A"),
         "email": user.email,
         "date_joined": user.date_joined,
@@ -331,6 +340,8 @@ def profile_edit(request):
     user = request.user
     context = {
         "username": user.username,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
         "email": user.email,
         "role": getattr(user, "role", "N/A"),
     }
@@ -343,13 +354,17 @@ def profile_edit(request):
 def update_profile_api(request):
     if request.method == "POST":
         try:
-            data = json.loads(request.body)
+            data = request.POST
+            profile_picture = request.FILES.get('profile_picture')
             user = request.user
 
             username = data.get("username", "").strip()
+            first_name = data.get("first_name", "").strip()
+            last_name = data.get("last_name", "").strip()
             email = data.get("email", "").strip()
+            profile_picture = request.FILES.get("profile_picture")
 
-            if not username or not email:
+            if not username or not email or not first_name or not last_name:
                 return JsonResponse({"success": False, "message": "All fields are required."})
 
             # ✅ check for duplicate email (avoid overwriting another user)
@@ -357,7 +372,11 @@ def update_profile_api(request):
                 return JsonResponse({"success": False, "message": "This email is already in use."})
 
             user.username = username
+            user.first_name = first_name
+            user.last_name = last_name
             user.email = email
+            if profile_picture:
+                user.profile_picture = profile_picture
             user.save()
 
             return JsonResponse({"success": True, "message": "Profile updated successfully!"})
@@ -628,3 +647,144 @@ def upload_marks_api(request):
 
         return JsonResponse({"success": True, "message": "Marks saved successfully!"})
     return JsonResponse({"error": "Invalid request"}, status=400)
+
+@login_required(login_url='/accounts/login-page/')
+def edit_marks_page(request):
+    user = request.user
+    courses = Course.objects.filter(usercourse__user=user)
+    return render(request, "accounts/edit_marks.html", {"username": user.username, "courses": courses})
+
+@login_required(login_url='/accounts/login-page/')
+def get_marks_api(request, course_id):
+    user = request.user
+    try:
+        course = Course.objects.get(id=course_id)
+        marks = Marks.objects.filter(student=user, course=course).first()
+        if marks:
+            data = {
+                "quiz1": marks.quiz1,
+                "quiz2": marks.quiz2,
+                "quiz3": marks.quiz3,
+                "attendance": marks.attendance,
+                "assignment": marks.assignment,
+                "presentation": marks.presentation,
+                "termexam": marks.termexam,
+            }
+        else:
+            data = {
+                "quiz1": 0, "quiz2":0, "quiz3":0,
+                "attendance":0, "assignment":0,
+                "presentation":0, "termexam":0
+            }
+        return JsonResponse({"success": True, "marks": data})
+    except Course.DoesNotExist:
+        return JsonResponse({"success": False, "message": "Course not found"})
+
+
+@login_required(login_url='/accounts/login-page/')
+@csrf_exempt
+def edit_marks_api(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        student = request.user
+        course = Course.objects.get(id=data['course_id'])
+
+        marks, created = Marks.objects.update_or_create(
+            student=student,
+            course=course,
+            defaults={
+                "quiz1": data.get("quiz1", 0),
+                "quiz2": data.get("quiz2", 0),
+                "quiz3": data.get("quiz3", 0),
+                "attendance": data.get("attendance", 0),
+                "assignment": data.get("assignment", 0),
+                "presentation": data.get("presentation", 0),
+                "termexam": data.get("termexam", 0),
+            },
+        )
+        return JsonResponse({"success": True, "message": "Marks updated successfully!"})
+    return JsonResponse({"success": False, "message": "Invalid request"})
+
+@login_required(login_url='/accounts/login-page/')
+def upload_syllabus_page(request):
+    # Get courses this user selected
+    user_courses = Course.objects.filter(usercourse__user=request.user)
+
+    if request.method == "POST":
+        course_id = request.POST.get("course")
+        topic_name = request.POST.get("topic_name")
+        lecture_slide = request.FILES.get("lecture_slide")
+
+        if course_id and topic_name and lecture_slide:
+            course = Course.objects.get(id=course_id)
+            Syllabus.objects.create(
+                user=request.user,
+                course=course,
+                topic_name=topic_name,
+                lecture_slide=lecture_slide
+            )
+            return redirect('upload_syllabus_page')  # Redirect to clear form
+
+    return render(request, "accounts/upload_syllabus.html", {"courses": user_courses})
+
+
+
+@login_required(login_url='/accounts/login-page/')
+def upload_syllabus(request):
+    # Only courses the user has selected
+    user_courses = UserCourse.objects.filter(user=request.user).values_list('course', flat=True)
+    courses = Course.objects.filter(id__in=user_courses)
+
+    if request.method == 'POST':
+        course_id = request.POST.get('course')
+        topic_name = request.POST.get('topic_name')
+        lecture_slide = request.FILES.get('lecture_slide')
+
+        if not course_id or not topic_name or not lecture_slide:
+            messages.error(request, "All fields are required!")
+        else:
+            course = Course.objects.get(id=course_id)
+            Syllabus.objects.create(
+                user=request.user,
+                course=course,
+                topic_name=topic_name,
+                lecture_slide=lecture_slide
+            )
+            messages.success(request, "Syllabus uploaded successfully!")
+            return redirect('upload_syllabus_page')
+
+    return render(request, 'accounts/upload_syllabus.html', {'courses': courses})
+
+@login_required(login_url='/accounts/login-page/')
+def selected_syllabus(request):
+    syllabi = Syllabus.objects.filter(user=request.user).order_by('uploaded_at')
+
+    # Add absolute URLs for Google Docs viewer
+    for s in syllabi:
+        if s.lecture_slide:
+            s.absolute_url = request.build_absolute_uri(s.lecture_slide.url)
+        else:
+            s.absolute_url = ""
+
+    return render(request, 'accounts/selected_syllabus.html', {'syllabi': syllabi})
+
+@login_required(login_url='/accounts/login-page/')
+@require_POST
+def delete_syllabus(request, pk):
+    # allow user to delete their own upload
+    s = get_object_or_404(Syllabus, pk=pk, user=request.user)
+    # remove file from disk (optional)
+    if s.lecture_slide:
+        s.lecture_slide.delete(save=False)
+    s.delete()
+    messages.success(request, "Syllabus deleted.")
+    return redirect('selected_syllabus_page')
+
+@login_required(login_url='/accounts/login-page/')
+def view_syllabus(request, pk):
+    syllabus = get_object_or_404(Syllabus, pk=pk, user=request.user)
+    file_path = syllabus.lecture_slide.path
+    file_mime, _ = mimetypes.guess_type(file_path)
+    response = FileResponse(open(file_path, 'rb'), content_type=file_mime)
+    response['Content-Disposition'] = f'inline; filename="{syllabus.lecture_slide.name.split("/")[-1]}"'
+    return response

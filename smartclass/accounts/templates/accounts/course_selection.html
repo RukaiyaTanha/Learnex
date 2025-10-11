@@ -10,11 +10,6 @@
 </head>
 <body>
 <div class="container">
-    <!-- Back Button 
-    <a href="{% url 'student_dashboard' %}" class="back-button">
-        <i class="fas fa-arrow-left"></i> Back
-    </a>
-    -->
     <header>
         <h1>Hi {{ username }}, Choose your courses</h1>
         <p>Select your courses to unlock content and quizzes</p>
@@ -53,9 +48,9 @@
             <i class="fas fa-book"></i>
             <span>Courses</span>
         </a>
-        <a href="{% url 'quiz_selection_page' %}" class="nav-link">
-            <i class="fas fa-question-circle"></i>
-            <span>Quiz</span>
+        <a href="{% url 'selected_courses_page' %}" class="nav-link">
+            <i class="fas fa-bookmark"></i>
+            <span>Selected Courses</span>
         </a>
         <a href="#" class="nav-link">
             <i class="fas fa-cog"></i>

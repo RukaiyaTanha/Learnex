@@ -10,7 +10,10 @@ urlpatterns = [
     path("forgot-password-api/", views.forgot_password_api, name="forgot_password_api"),
     path("save-courses/", views.save_courses_api, name="save_courses_api"),
     path("profile/update/", views.update_profile_api, name="update_profile_api"),
-     path("upload-marks-api/", views.upload_marks_api, name="upload_marks_api"),
+    path("upload-marks-api/", views.upload_marks_api, name="upload_marks_api"),
+    path('get-marks/<int:course_id>/', views.get_marks_api, name='get_marks_api'),
+    path('edit-marks-api/', views.edit_marks_api, name='edit_marks_api'),
+   
     # HTML pages
     path("register-page/", views.registration_page, name="registration_page"),
     path("login-page/", views.login_page, name="login_page"),
@@ -24,6 +27,11 @@ urlpatterns = [
     path("profile/edit/", views.profile_edit, name="profile_edit"),
     path('selected-courses/', views.selected_courses_page, name='selected_courses_page'),
     path('upload-marks/', views.upload_marks_page, name='upload_marks_page'),
+    path('edit-marks/', views.edit_marks_page, name='edit_marks_page'),
+    path('upload-syllabus/', views.upload_syllabus, name='upload_syllabus_page'),
+    path('selected-syllabus/', views.selected_syllabus, name='selected_syllabus_page'),
+    path('syllabus/delete/<int:pk>/', views.delete_syllabus, name='delete_syllabus'),
+    path('syllabus/view/<int:pk>/', views.view_syllabus, name='view_syllabus'),
     # ✅ password reset
     path('reset-password/<uidb64>/<token>/', views.reset_password_page, name='reset_password_page'),
     path('reset-password-api/', views.reset_password_api, name='reset_password_api'),

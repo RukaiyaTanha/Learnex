@@ -41,32 +41,25 @@ header p {
     font-size: 14px;
     color: #555;
 }
-
-/* ===== Back Button ===== */
-.back-button {
-    display: inline-flex;
-    align-items: center;
-    text-decoration: none;
-    color: #2575fc;
-    font-weight: 600;
-    padding: 8px 14px;
-    border-radius: 12px;
-    background: #f0f7ff;
-    box-shadow: 0 2px 6px rgba(37,117,252,0.2);
-    font-size: 14px;
-    transition: all 0.3s ease, transform 0.2s ease;
-}
-.back-button:hover {
-    background: #e0f0ff;
-    box-shadow: 0 5px 12px rgba(37,117,252,0.3);
-    transform: translateY(-1px);
-}
-.back-button i {
-    margin-right: 6px;
-    font-size: 14px;
-}
-
 /* ===== Selection Panel with inline Add button ===== */
+/* ===== Custom Select Styling ===== */
+.section select {
+    width: 50%;
+    margin-bottom: 30px;
+    margin-top: 15px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    appearance: none;
+    background: #fff url("data:image/svg+xml,%3Csvg fill='%23555' height='12' viewBox='0 0 24 24' width='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") no-repeat;
+    background-position: right 12px center;
+    background-size: 12px 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+
 .selection-panel {
     margin-bottom: 25px;
 }
@@ -88,7 +81,7 @@ header p {
     min-width: 100px;
 }
 .custom-select select {
-    width: 60%;
+    width: 50%;
     padding: 8px 12px;
     border-radius: 6px;
     border: 1px solid #ccc;
@@ -98,7 +91,7 @@ header p {
 .custom-select i {
     position: absolute;
     top: 50%;
-    right: 275px;
+    right: 335px;
     transform: translateY(-50%);
     color: #555;
 }
@@ -227,6 +220,90 @@ header p {
 .navigation-footer .nav-link.active,
 .navigation-footer .nav-link:hover { color: #2575fc; }
 .navigation-footer i { font-size: 18px; margin-bottom: 4px; }
+
+/* ===== Marks Grid & Cards ===== */
+.marks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.marks-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid #eee;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.marks-card h3 {
+    color: #2575fc;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.marks-card input {
+    width: 80%;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+/* ===== Upload Button (modern style) ===== */
+.upload {
+    padding: 12px 25px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    background: #2575fc;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: block;
+    margin: 0 auto 30px auto;
+}
+
+.upload:hover {
+    background: #1c64e0;
+    transform: translateY(-1px);
+}
+/* ====== TOAST ====== */
+.toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1829a2;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 30px;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.4s, bottom 0.4s;
+    z-index: 999;
+}
+
+.toast.show {
+    opacity: 1;
+    bottom: 110px;
+}
+/* ===== Responsive ===== */
+@media(max-width:768px){
+    .marks-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+}
+
+@media(max-width:480px){
+    .marks-grid {
+        grid-template-columns: 1fr;
+    }
+}
 
 /* ===== Responsive ===== */
 @media(max-width:768px){

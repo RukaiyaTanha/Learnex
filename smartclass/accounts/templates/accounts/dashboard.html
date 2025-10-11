@@ -17,7 +17,13 @@
         </div>
         <div class="profile-section">
     <a href="{% url 'profile_page' %}" class="profile-info-link">
-        <div class="profile-icon"><i class="fas fa-user-graduate"></i></div>
+        <div class="profile-icon">
+            {% if user.profile_picture %}
+                <img src="{{ user.profile_picture.url }}" alt="Profile Picture" class="dashboard-profile-pic">
+            {% else %}
+                <i class="fas fa-user-graduate"></i>
+            {% endif %}
+        </div>
         <div class="profile-info">
             <span class="profile-name">{{ username }}</span>
             <span class="profile-role">{{ role }}</span>
@@ -56,17 +62,21 @@
     </div>
 
     <div class="dashboard-card">
+    <a href="{% url 'upload_syllabus_page' %}" class="card-link">
         <div class="card-icon"><i class="fas fa-brain"></i></div>
         <h3>Wanna test more?</h3>
         <p>Additional practice tests and exercises</p>
         <div class="card-action"><span>Let's go</span><i class="fas fa-arrow-right"></i></div>
+    </a>
     </div>
 
     <div class="dashboard-card">
+    <a href="{% url 'upload_syllabus_page' %}" class="card-link">
         <div class="card-icon"><i class="fas fa-file-alt"></i></div>
         <h3>Upload your course syllabus</h3>
         <p>Share your syllabus for personalized learning</p>
         <div class="card-action"><span>Let's go</span><i class="fas fa-arrow-right"></i></div>
+    </a>
     </div>
 
     <div class="dashboard-card">
@@ -77,36 +87,75 @@
     </div>
 </div>
     <div class="navigation-footer">
-        <a href="#" class="nav-link"><i class="fas fa-home"></i><span>Home</span></a>
-        <a href="{% url 'quiz_selection_page' %}" class="nav-link"><i class="fas fa-book"></i><span>Courses</span></a>
+        <a href="#" class="nav-link active"><i class="fas fa-home"></i><span>Home</span></a>
+        <a href="#" class="nav-link"><i class="fas fa-calendar-alt"></i><span>Schedule</span></a>
+        <a href="#" class="nav-link"><i class="fas fa-envelope"></i><span>Messages</span></a>
         <a href="#" class="nav-link"><i class="fas fa-chart-bar"></i><span>Progress</span></a>
         <a href="#" class="nav-link"><i class="fas fa-cog"></i><span>Settings</span></a>
     </div>
 </div>
+<!-- Settings Sidebar -->
+<div id="settingsSidebar" class="settings-sidebar">
+    <div class="settings-header">
+        <h3>Settings</h3>
+        <button id="closeSettings" class="close-btn"><i class="fas fa-times"></i></button>
+    </div>
+    <ul class="settings-list">
+        <li class="dark-toggle"><i class="fas fa-moon"></i><span> Dark Mode</span></li>
+        <li><i class="fas fa-bell"></i> Notifications</li>
+        <li><i class="fas fa-lock"></i> Privacy & Security</li>
+        <li><i class="fas fa-language"></i> Language</li>
+        <li><i class="fas fa-user-cog"></i> Account Settings</li>
+    </ul>
+</div>
 <!-- JS for Logout -->
 <script>
-document.getElementById("logoutBtn").addEventListener("click", async () => {
-    try {
-        const response = await fetch("{% url 'logout_api' %}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": "{{ csrf_token }}"
-            }
-        });
+document.addEventListener('DOMContentLoaded', function () {
+  const icon = document.querySelector('.nav-link i.fa-cog');
+  const settingsNav = icon ? icon.closest('.nav-link') : null;
+  const sidebar = document.getElementById('settingsSidebar');
+  const closeBtn = document.getElementById('closeSettings');
 
-        const data = await response.json();
-        if (data.success) {
-            alert("Logged out successfully!");
-            window.location.href = "{% url 'login_page' %}";
-        } else {
-            alert("Logout failed: " + data.message);
-        }
-    } catch (err) {
-        alert("An error occurred: " + err);
+  if (!settingsNav || !sidebar) return;
+
+  settingsNav.addEventListener('click', e => {
+    e.preventDefault();
+    sidebar.classList.toggle('open');
+  });
+
+  closeBtn?.addEventListener('click', () => sidebar.classList.remove('open'));
+  document.addEventListener('keydown', e => e.key === 'Escape' && sidebar.classList.remove('open'));
+  document.addEventListener('click', e => {
+    if (!sidebar.classList.contains('open')) return;
+    if (sidebar.contains(e.target) || settingsNav.contains(e.target)) return;
+    sidebar.classList.remove('open');
+  });
+
+  // === DARK MODE TOGGLE ===
+  const darkToggle = document.querySelector('.dark-toggle');
+  const body = document.body;
+
+  // Load saved preference
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    body.classList.add('dark-mode');
+    darkToggle.querySelector('i').classList.replace('fa-moon', 'fa-sun');
+    darkToggle.querySelector('span').textContent = ' Light Mode';
+  }
+
+  darkToggle.addEventListener('click', () => {
+    const isDark = body.classList.toggle('dark-mode');
+    if (isDark) {
+      localStorage.setItem('theme', 'dark');
+      darkToggle.querySelector('i').classList.replace('fa-moon', 'fa-sun');
+      darkToggle.querySelector('span').textContent = ' Light Mode';
+    } else {
+      localStorage.setItem('theme', 'light');
+      darkToggle.querySelector('i').classList.replace('fa-sun', 'fa-moon');
+      darkToggle.querySelector('span').textContent = ' Dark Mode';
     }
+  });
 });
 </script>
-
 </body>
 </html>

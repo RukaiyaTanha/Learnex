@@ -8,6 +8,7 @@ class CustomUser(AbstractUser):
         ('Teacher', 'Teacher'),
     )
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
 
 # Courses
 # ----------------------
@@ -76,3 +77,14 @@ class Marks(models.Model):
 
     def __str__(self):
         return f"{self.student.username} - {self.course.name}" 
+    
+# ---------------------- Syllabus ----------------------
+class Syllabus(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    topic_name = models.CharField(max_length=200)
+    lecture_slide = models.FileField(upload_to='syllabus/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.course.name} - {self.topic_name}"

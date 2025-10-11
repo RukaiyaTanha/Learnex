@@ -44,7 +44,7 @@ header p {
 /* ===== Selection Panel with inline Add button ===== */
 /* ===== Custom Select Styling ===== */
 .section select {
-    width: 40%;
+    width: 50%;
     margin-bottom: 30px;
     margin-top: 15px;
     padding: 10px 14px;
@@ -272,7 +272,6 @@ header p {
     background: #1c64e0;
     transform: translateY(-1px);
 }
-
 /* ===== Responsive ===== */
 @media(max-width:768px){
     .marks-grid {

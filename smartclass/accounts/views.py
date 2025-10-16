@@ -3,7 +3,7 @@ from django.http import JsonResponse,FileResponse
 from django.contrib.auth import get_user_model, authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
-from .models import Course, UserCourse,Topic, Question,Marks,Syllabus
+from .models import Course, UserCourse,Topic, Question,Marks,Syllabus, QuizAttendance
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
@@ -18,6 +18,7 @@ from difflib import SequenceMatcher
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 import mimetypes
+from django.db.models import F, Avg
 import json
 
 User = get_user_model()
@@ -788,3 +789,127 @@ def view_syllabus(request, pk):
     response = FileResponse(open(file_path, 'rb'), content_type=file_mime)
     response['Content-Disposition'] = f'inline; filename="{syllabus.lecture_slide.name.split("/")[-1]}"'
     return response
+
+@login_required(login_url='/accounts/login-page/')
+def calculate_cgpa_page(request):
+    return render(request, 'accounts/calculate_cgpa.html')
+
+@login_required(login_url='/accounts/login-page/')
+def overall_performance(request):
+    user = request.user
+
+    # ✅ Get all marks for the logged-in student
+    student_marks = Marks.objects.filter(student=user)
+
+    if not student_marks.exists():
+        context = {
+            "completed_quizzes": 0,
+            "performance_rate": 0,
+            "improvement_rate": 0,
+            "predicted_performance": 0,
+            "courses": [],
+            "attendance_by_course": {},
+        }
+        return render(request, "accounts/overall_performance.html", context)
+
+    # ✅ Completed quizzes (count non-zero quiz scores)
+    completed_quizzes = 0
+    for mark in student_marks:
+        completed_quizzes += sum(1 for q in [mark.quiz1, mark.quiz2, mark.quiz3] if q > 0)
+
+    # ✅ Average performance rate (total percentage average)
+    avg_total_score = (
+        student_marks.aggregate(
+            avg=Avg(
+                (F('quiz1') + F('quiz2') + F('quiz3') +
+                 F('attendance') + F('assignment') + F('presentation') + F('termexam')) / 7
+            )
+        )["avg"] or 0
+    )
+    performance_rate = round(avg_total_score, 2)
+
+    # ✅ Improvement rate (difference between earliest and latest)
+    marks_sorted = student_marks.order_by('uploaded_at')
+    if marks_sorted.count() >= 2:
+        first_score = (marks_sorted.first().quiz1 + marks_sorted.first().quiz2 + marks_sorted.first().quiz3) / 3
+        last_score = (marks_sorted.last().quiz1 + marks_sorted.last().quiz2 + marks_sorted.last().quiz3) / 3
+        improvement_rate = round(last_score - first_score, 2)
+    else:
+        improvement_rate = 0
+
+    # ✅ Course-wise performance
+    courses = []
+    attendance_by_course = {}
+    for mark in student_marks:
+        total = (mark.quiz1 + mark.quiz2 + mark.quiz3 +
+                 mark.attendance + mark.assignment + mark.presentation + mark.termexam) / 7
+        courses.append({
+            "name": mark.course.name,
+            "performance": round(total, 2)
+        })
+
+        # ✅ Attendance based on quiz scores
+        attendance_by_course[mark.course.name] = {}
+        for i, q_score in enumerate([mark.quiz1, mark.quiz2, mark.quiz3], start=1):
+            attendance_by_course[mark.course.name][f"Week {i}"] = "✔️" if q_score > 0 else "❌"
+
+    # ✅ Predicted performance (simple logic)
+    if performance_rate < 60:
+        predicted_performance = round(performance_rate + 10, 2)
+    elif performance_rate < 80:
+        predicted_performance = round(performance_rate + 5, 2)
+    else:
+        predicted_performance = round(performance_rate + 2, 2)
+
+    # ✅ Context
+    context = {
+        "completed_quizzes": completed_quizzes,
+        "performance_rate": performance_rate,
+        "improvement_rate": improvement_rate,
+        "predicted_performance": predicted_performance,
+        "courses": courses,
+        "attendance_by_course": attendance_by_course,
+    }
+
+    return render(request, "accounts/overall_performance.html", context)
+
+# AIUB grade points mapping
+GRADE_POINTS = {
+    "A+": 4.00,
+    "A": 3.75,
+    "B+": 3.50,
+    "B": 3.25,
+    "C+": 3.00,
+    "C": 2.75,
+    "D+": 2.50,
+    "D": 2.25,
+    "F": 0.00
+}
+
+@login_required(login_url='/accounts/login-page/')
+def current_semester_cg(request):
+    courses = []
+    cg = None
+    total_credits = None
+
+    if request.method == "POST":
+        num_courses = int(request.POST.get("num_courses", 0))
+        total_points = 0
+        total_credits = 0
+
+        for i in range(1, num_courses + 1):
+            grade = request.POST.get(f"grade_{i}")
+            credits = float(request.POST.get(f"credits_{i}", 0))
+            if grade in GRADE_POINTS and credits > 0:
+                total_points += GRADE_POINTS[grade] * credits
+                total_credits += credits
+
+        if total_credits > 0:
+            cg = round(total_points / total_credits, 2)
+
+    return render(request, "accounts/current_semester_cg.html", {
+        "courses": courses,
+        "cg": cg,
+        "total_credits": total_credits,
+        "grades": list(GRADE_POINTS.keys())
+    })

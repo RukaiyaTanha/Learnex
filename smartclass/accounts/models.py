@@ -88,3 +88,17 @@ class Syllabus(models.Model):
 
     def __str__(self):
         return f"{self.course.name} - {self.topic_name}"
+    
+# ---------------------- Quiz Attendence ----------------------
+class QuizAttendance(models.Model):
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    week = models.PositiveIntegerField()
+    attended = models.BooleanField(default=True)
+    date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('student', 'course', 'week')
+
+    def __str__(self):
+        return f"{self.student.username} - {self.course.name} (Week {self.week})"    

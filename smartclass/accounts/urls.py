@@ -32,6 +32,9 @@ urlpatterns = [
     path('selected-syllabus/', views.selected_syllabus, name='selected_syllabus_page'),
     path('syllabus/delete/<int:pk>/', views.delete_syllabus, name='delete_syllabus'),
     path('syllabus/view/<int:pk>/', views.view_syllabus, name='view_syllabus'),
+    path('calculate-cgpa/', views.calculate_cgpa_page, name='calculate_cgpa_page'),
+    path("current-semester-cg/", views.current_semester_cg, name="current_semester_cg"),
+    path('overall-performance/', views.overall_performance, name='overall_performance'),
     # ✅ password reset
     path('reset-password/<uidb64>/<token>/', views.reset_password_page, name='reset_password_page'),
     path('reset-password-api/', views.reset_password_api, name='reset_password_api'),

@@ -20,6 +20,17 @@ from django.views.decorators.http import require_POST
 import mimetypes
 from django.db.models import F, Avg
 import json
+import os
+import pdfplumber
+from PIL import Image
+import pytesseract
+import docx
+from pptx import Presentation
+from django.conf import settings
+from django.contrib import messages
+import google.generativeai as genai
+import markdown2
+from django.utils.safestring import mark_safe
 
 User = get_user_model()
 
@@ -728,8 +739,6 @@ def upload_syllabus_page(request):
 
     return render(request, "accounts/upload_syllabus.html", {"courses": user_courses})
 
-
-
 @login_required(login_url='/accounts/login-page/')
 def upload_syllabus(request):
     # Only courses the user has selected
@@ -912,4 +921,126 @@ def current_semester_cg(request):
         "cg": cg,
         "total_credits": total_credits,
         "grades": list(GRADE_POINTS.keys())
+    })
+
+# -------------------- File extraction functions --------------------
+# Configure your API key securely (ensure you have it in your environment variables)
+genai.configure(api_key="AIzaSyCPopZHtLDeaMwiyB5rYpDZb6F4V9LS6OM")
+
+def extract_text_from_pdf(file_path):
+    """
+    Extract text from a PDF file.
+    Handles both plain text PDFs and scanned image PDFs using OCR.
+    """
+    text = ""
+
+    try:
+        with pdfplumber.open(file_path) as pdf:
+            for page in pdf.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    # If normal text exists, use it
+                    text += page_text + "\n"
+                else:
+                    # If page has no text, assume scanned image -> use OCR
+                    # Convert page to image
+                    pil_image = page.to_image(resolution=300).original
+                    ocr_text = pytesseract.image_to_string(pil_image)
+                    text += ocr_text + "\n"
+    except Exception as e:
+        text += f"\n[Error reading PDF {os.path.basename(file_path)}: {str(e)}]\n"
+
+    return text
+
+def extract_text_from_docx(file_path):
+    text = ""
+    try:
+        doc = docx.Document(file_path)
+        text = "\n".join([para.text for para in doc.paragraphs])
+    except Exception as e:
+        text += f"\n[Error reading DOCX {os.path.basename(file_path)}: {str(e)}]\n"
+    return text
+
+def extract_text_from_pptx(file_path):
+    text = ""
+    try:
+        prs = Presentation(file_path)
+        for slide in prs.slides:
+            for shape in slide.shapes:
+                if hasattr(shape, "text") and shape.text.strip():
+                    text += shape.text + "\n"
+    except Exception as e:
+        text += f"\n[Error reading PPTX {os.path.basename(file_path)}: {str(e)}]\n"
+    return text
+
+# -------------------- Aggregate all syllabus content --------------------
+
+def get_syllabus_text(user):
+    """Return all text from all syllabus files for this user."""
+    syllabi = Syllabus.objects.filter(user=user)
+    full_text = ""
+    for s in syllabi:
+        path = s.lecture_slide.path
+        ext = os.path.splitext(path)[1].lower()
+        if ext == ".pdf":
+            full_text += extract_text_from_pdf(path) + "\n"
+        elif ext == ".docx":
+            full_text += extract_text_from_docx(path) + "\n"
+        elif ext == ".pptx":
+            full_text += extract_text_from_pptx(path) + "\n"
+        else:
+            full_text += f"\n[Unsupported file type {s.lecture_slide.name} skipped]\n"
+    return full_text
+
+# -------------------- AI Assistant view --------------------
+
+@login_required(login_url='/accounts/login-page/')
+def ai_assistant(request):
+    user_prompt = ""
+
+    # Initialize conversation in session
+    if 'conversation' not in request.session:
+        request.session['conversation'] = []
+
+    if request.method == "POST":
+        user_prompt = request.POST.get("prompt", "").strip()
+        if user_prompt:
+            conversation_history = request.session.get('conversation', [])
+
+            # ------------------ Build prompt ------------------
+            syllabus_text = get_syllabus_text(request.user)
+            full_prompt = f"""You are an AI tutor. Use the following syllabus content uploaded by the user to answer questions accurately. 
+Only answer based on the syllabus text below:
+
+{syllabus_text}
+
+Conversation so far:
+"""
+            for msg in conversation_history:
+                full_prompt += f"{msg['role']}: {msg['content']}\n"
+            full_prompt += f"user: {user_prompt}"
+
+            try:
+                # ------------------ Generate AI response ------------------
+                model = genai.GenerativeModel("gemini-2.5-flash-lite-preview-09-2025")
+                result = model.generate_content(full_prompt)
+                ai_raw_response = result.text
+
+                # Convert Markdown to modern HTML (with nice code boxes)
+                ai_response = markdown2.markdown(
+                    ai_raw_response,
+                    extras=["fenced-code-blocks", "break-on-newline"]
+                )
+
+            except Exception as e:
+                ai_response = f"⚠️ Error generating AI response: {str(e)}"
+
+            # ------------------ Save conversation ------------------
+            conversation_history.append({'role': 'user', 'content': user_prompt})
+            conversation_history.append({'role': 'ai', 'content': ai_response})
+            request.session['conversation'] = conversation_history
+
+    return render(request, "accounts/ai_assistant.html", {
+        "conversation": request.session.get('conversation', []),
+        "prompt": user_prompt
     })

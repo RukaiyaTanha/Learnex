@@ -35,6 +35,7 @@ urlpatterns = [
     path('calculate-cgpa/', views.calculate_cgpa_page, name='calculate_cgpa_page'),
     path("current-semester-cg/", views.current_semester_cg, name="current_semester_cg"),
     path('overall-performance/', views.overall_performance, name='overall_performance'),
+    path("ai-assistant/", views.ai_assistant, name="ai_assistant"),
     # ✅ password reset
     path('reset-password/<uidb64>/<token>/', views.reset_password_page, name='reset_password_page'),
     path('reset-password-api/', views.reset_password_api, name='reset_password_api'),

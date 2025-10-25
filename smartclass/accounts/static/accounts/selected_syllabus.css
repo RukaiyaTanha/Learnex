@@ -20,9 +20,12 @@ body {
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-  width: 95%;
-  max-width: 1000px;
+  width: 100%;
+  max-width: 1300px;
   padding: 30px 25px;
+  display: flex;
+  flex-direction: column;
+  min-height: 90vh;
 }
 
 /* ===== Header ===== */
@@ -159,7 +162,7 @@ header p {
   background: #f8f9fa;
   padding: 15px 10px;
   border-radius: 15px;
-  margin-top: 40px;
+  margin-top: auto;
 }
 .nav-link {
   display: flex;

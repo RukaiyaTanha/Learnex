@@ -20,8 +20,8 @@ body {
     background-color: white;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    width: 90%;
-    max-width: 900px;
+    width: 100%;
+    max-width: 1300px;
     padding: 25px;
     position: relative;
 }

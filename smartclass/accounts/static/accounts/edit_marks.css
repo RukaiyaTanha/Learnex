@@ -21,8 +21,8 @@ body {
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    width: 95%;
-    max-width: 800px;
+    width: 100%;
+    max-width: 1300px;
     padding: 25px 20px;
     position: relative;
 }
@@ -44,7 +44,7 @@ header p {
 /* ===== Selection Panel with inline Add button ===== */
 /* ===== Custom Select Styling ===== */
 .section select {
-    width: 50%;
+    width: 30%;
     margin-bottom: 30px;
     margin-top: 15px;
     padding: 10px 14px;

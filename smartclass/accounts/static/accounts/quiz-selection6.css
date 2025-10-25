@@ -19,8 +19,8 @@ body {
     background-color: white;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    width: 90%;
-    max-width: 900px;
+    width: 100%;
+    max-width: 1300px;
     padding: 25px;
     position: relative;
 }
@@ -94,7 +94,7 @@ header p {
 }
 
 .custom-select select {
-    width: 100%;
+    width: 70%;
     padding: 12px 15px;
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -106,7 +106,7 @@ header p {
 
 .custom-select i {
     position: absolute;
-    right: 15px;
+    left: 380px;
     top: 50%;
     transform: translateY(-50%);
     color: #777;

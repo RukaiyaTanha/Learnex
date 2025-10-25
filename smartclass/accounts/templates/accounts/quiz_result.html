@@ -19,11 +19,33 @@
         <p>Performance Rate: <span class="highlight">{{ performance_rate }}%</span></p>
     </div>
 
-    <div class="analysis">
-        <p><strong>Weak Areas:</strong> {{ weak_areas }}</p>
-        <p><strong>Improvement:</strong> {{ improvement }}</p>
-        <p><strong>Prediction:</strong> {{ prediction }}</p>
+    {% if ai_feedback %}
+<div class="ai-feedback">
+    <h3>AI Feedback</h3>
+
+    {% if ai_feedback.weak_areas %}
+    <div class="feedback-section weak-areas">
+        <h4>Weak Areas</h4>
+        <p>{{ ai_feedback.weak_areas|safe }}</p>
     </div>
+    {% endif %}
+
+    {% if ai_feedback.improvement %}
+    <div class="feedback-section improvement">
+        <h4>Improvement Suggestions</h4>
+        <p>{{ ai_feedback.weak_areas|safe }}</p>
+    </div>
+    {% endif %}
+
+    {% if ai_feedback.prediction %}
+    <div class="feedback-section prediction">
+        <h4>Performance Prediction</h4>
+        <p>{{ ai_feedback.weak_areas|safe }}</p>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
 
     <h3>Question Analysis:</h3>
     {% for r in results %}

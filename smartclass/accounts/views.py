@@ -30,6 +30,7 @@ from django.conf import settings
 from django.contrib import messages
 import google.generativeai as genai
 import markdown2
+from .ai_feedback import generate_ai_feedback
 from django.utils.safestring import mark_safe
 
 User = get_user_model()
@@ -398,7 +399,6 @@ def update_profile_api(request):
     return JsonResponse({"success": False, "message": "Invalid request"})
 
 # ---------- Quiz page ----------
-
 @login_required(login_url='/accounts/login-page/')
 def quiz_page(request, course_id, topic_id, type):
     try:
@@ -409,99 +409,174 @@ def quiz_page(request, course_id, topic_id, type):
 
     # Hardcoded questions with time_duration and marks per quiz type
     all_questions = {
-        "6": {  # Course: Differential
-            "94": {  # Topic: Limits
-                "mcq": {
-                    "time_duration": "15 Minutes",
-                    "marks": 20,
-                    "questions": [
-                        {"question": f"What is the limit of x approaching {i+1} for f(x)?",
-                         "options": [str(j) for j in range(i, i+4)], "answer": str(i+2)}
-                        for i in range(20)
-                    ]
-                },
-                "scenario-mcq": {
-                    "time_duration": "20 Minutes",
-                    "marks": 20,
-                    "questions": [
-                        {"question": f"Function behavior analysis. What is the correct limit?",
-                         "options": ["0", "1", "Infinity", "-Infinity"], "answer": "1"}
-                        for i in range(20)
-                    ]
-                },
-                "code": {
-                    "time_duration": "1 Hour",
-                    "marks": 35,
-                    "questions": [
-                        {"question": "Write Python function to compute limit of f(x) = x^2 - 1 as x -> 1.", "options": [], "answer": ""},
-                        {"question": "Write Python code to find the limit of sin(x)/x as x -> 0.", "options": [], "answer": ""},
-                        {"question": "Trace the output:\nfor i in range(3):\n    print(i**2)", "options": [], "answer": "0 1 4"},
-                        {"question": "Trace the output:\na = [1,2,3]\nprint(a[-1])", "options": [], "answer": "3"},
-                        {"question": "Trace the output:\nprint(len('limit'))", "options": [], "answer": "5"},
-                    ]
-                },
-                "theory": {
-                    "time_duration": "45 Minutes",
-                    "marks": 30,
-                    "questions": [
-                        {"question": "Short Question 1: Define the concept of limit in calculus.", "options": [], "answer": ""},
-                        {"question": "Short Question 2: What is a left-hand limit?", "options": [], "answer": ""},
-                        {"question": "Short Question 3: What is a right-hand limit?", "options": [], "answer": ""},
-                        {"question": "Short Question 4: State limit laws.", "options": [], "answer": ""},
-                        {"question": "Short Question 5: Explain continuity at a point.", "options": [], "answer": ""},
-                        {"question": "Broad Question 1: Discuss how limits are used to find derivatives.", "options": [], "answer": ""},
-                        {"question": "Broad Question 2: Solve a real-world problem using limits.", "options": [], "answer": ""},
-                    ]
-                },
-            }
-        },
-        "1": {  # Course: Web Technology
-            "84": {  # Topic: HTML Basics
-                "mcq": {
-                    "time_duration": "15 Minutes",
-                    "marks": 15,
-                    "questions": [
-                        {"question": f"Which HTML tag is used for {['paragraph', 'heading', 'link', 'image'][i%4]}?",
-                         "options": ["<p>", "<h1>", "<a>", "<img>"], "answer": ["<p>", "<h1>", "<a>", "<img>"][i%4]}
-                        for i in range(10)
-                    ]
-                },
-                "scenario-mcq": {
-                    "time_duration": "20 Minutes",
-                    "marks": 20,
-                    "questions": [
-                        {"question": f"You want to display an image on a webpage. Which tag should you use?",
-                         "options": ["<p>", "<img>", "<div>", "<span>"], "answer": "<img>"}
-                        for i in range(5)
-                    ]
-                },
-                "code": {
-                    "time_duration": "1 Hour",
-                    "marks": 35,
-                    "questions": [
-                        {"question": "Write the HTML code to create a hyperlink to https://example.com", "options": [], "answer": "<a href='https://example.com'>Link</a>"},
-                        {"question": "Write the HTML code to create an ordered list with 3 items", "options": [], "answer": "<ol><li>Item1</li><li>Item2</li><li>Item3</li></ol>"},
-                    ]
-                },
-                "theory": {
-                    "time_duration": "45 Minutes",
-                    "marks": 30,
-                    "questions": [
-                        {"question": "Define what HTML is.", "options": [], "answer": ""},
-                        {"question": "Explain the difference between <div> and <span>.", "options": [], "answer": ""},
-                        {"question": "List some commonly used HTML tags.", "options": [], "answer": ""},
-                    ]
-                },
+    "6": {  # Course: Differential
+        "94": {  # Topic: Limits
+            "mcq": {
+                "time_duration": "15 Minutes",
+                "marks": 20,
+                "questions": [
+                    {"question": "lim x→2 (x^2 - 4)/(x - 2)", "options": ["2", "4", "6", "8"], "answer": "4"},
+                    {"question": "lim x→0 sin(x)/x", "options": ["0", "1", "Infinity", "-Infinity"], "answer": "1"},
+                    {"question": "lim x→1 (x^3 - 1)/(x - 1)", "options": ["1", "2", "3", "0"], "answer": "3"},
+                    {"question": "lim x→0 |x|/x", "options": ["0", "1", "Does not exist", "-1"], "answer": "Does not exist"},
+                    {"question": "If lim x→a f(x)=L, it may or may not equal f(a)", "options": ["True", "False"], "answer": "True"},
+                    {"question": "lim x→∞ 1/x", "options": ["0", "1", "Infinity", "-Infinity"], "answer": "0"},
+                    {"question": "lim x→0 (1+x)^(1/x)", "options": ["1", "e", "0", "Infinity"], "answer": "e"},
+                    {"question": "Rule used to solve 0/0 form", "options": ["L’Hôpital’s Rule", "Chain Rule", "Product Rule", "Quotient Rule"], "answer": "L’Hôpital’s Rule"},
+                    {"question": "lim x→0 (1-cos(x))/x^2", "options": ["0", "1/2", "1", "2"], "answer": "1/2"},
+                    {"question": "lim x→0 tan(x)/x", "options": ["0", "1", "Infinity", "-Infinity"], "answer": "1"},
+                    {"question": "lim x→3 (x^2+2x-9)/(x-3)", "options": ["6", "7", "8", "9"], "answer": "8"},
+                    {"question": "lim x→0 (e^x - 1)/x", "options": ["0", "1", "e", "-1"], "answer": "1"},
+                    {"question": "If left-hand ≠ right-hand limits, limit does not exist", "options": ["True", "False"], "answer": "True"},
+                    {"question": "lim x→0 x*ln(x)", "options": ["0", "1", "-Infinity", "Does not exist"], "answer": "0"},
+                    {"question": "lim x→∞ (1 + 2/x)^x", "options": ["2", "e", "e^2", "Infinity"], "answer": "e^2"},
+                    {"question": "For f(x)=|x|, lim x→0^- f(x)", "options": ["0", "1", "-1", "Does not exist"], "answer": "0"},
+                    {"question": "Removable discontinuity is called?", "options": ["Hole", "Jump", "Infinite", "Oscillation"], "answer": "Hole"},
+                    {"question": "lim x→0 sin(3x)/x", "options": ["1", "3", "0", "Does not exist"], "answer": "3"},
+                    {"question": "lim x→∞ (2x^2+5x)/(x^2+3x)", "options": ["1", "2", "3", "5"], "answer": "2"},
+                    {"question": "Formal definition of limit involves |x-a|<δ ⇒ |f(x)-L|<ε", "options": ["True", "False"], "answer": "True"}
+                ]
+            },
+            "scenario-mcq": {
+                "time_duration": "20 Minutes",
+                "marks": 20,
+                "questions": [
+                    {"question": "Function jumps from 2 to 5 at x=1", "options": ["Limit exists", "Limit does not exist"], "answer": "Limit does not exist"},
+                    {"question": "LHL=RHL=2", "options": ["Limit exists", "Limit does not exist"], "answer": "Limit exists"},
+                    {"question": "Graph has hole at (1,2)", "options": ["Limit = 0", "Limit = 2"], "answer": "Limit = 2"},
+                    {"question": "lim Δt→0 Δs/Δt", "options": ["Displacement", "Velocity", "Acceleration", "Speed"], "answer": "Velocity"},
+                    {"question": "P(t)=100t/(t+1), t→∞", "options": ["100", "0", "Infinity", "1"], "answer": "100"},
+                    {"question": "E(x)=(x^2-4)/(x-2)", "options": ["Exact error", "Approximated error"], "answer": "Approximated error"},
+                    {"question": "T(t)=5+2*sin(t), t→0", "options": ["5", "0", "2", "Infinity"], "answer": "5"},
+                    {"question": "f(x)=1/x, x→0+", "options": ["0", "∞", "-∞", "Does not exist"], "answer": "∞"},
+                    {"question": "sin(0.00001)/0.00001", "options": ["≈0", "≈1", "≈2", "Undefined"], "answer": "≈1"},
+                    {"question": "Limit exists but f(a) undefined", "options": ["Function continuous", "Function discontinuous"], "answer": "Function discontinuous"},
+                    {"question": "Infinite oscillation (sin(1/x))", "options": ["Limit exists", "Limit does not exist"], "answer": "Limit does not exist"},
+                    {"question": "Growth rate→0", "options": ["Growth continues", "Growth stops"], "answer": "Growth stops"},
+                    {"question": "Left and right limits differ", "options": ["Bilateral limit", "Jump discontinuity"], "answer": "Jump discontinuity"},
+                    {"question": "Supply→∞, price→0", "options": ["Direct relation", "Inverse relation"], "answer": "Inverse relation"},
+                    {"question": "f(x)=1/(x-2), x→2", "options": ["Limit exists", "Limit does not exist"], "answer": "Limit does not exist"},
+                    {"question": "Same value both sides", "options": ["Bilateral limit", "Jump discontinuity"], "answer": "Bilateral limit"},
+                    {"question": "T(x)=x^2, x→-3", "options": ["Limit = -9", "Limit = 9"], "answer": "Limit = 9"},
+                    {"question": "f(x)=|x|/x, x=0", "options": ["Defined", "Undefined"], "answer": "Undefined"},
+                    {"question": "(1+1/x)^x, x→∞", "options": ["1", "e"], "answer": "e"},
+                    {"question": "Limit depends on path", "options": ["Path-dependent", "Path-independent"], "answer": "Path-dependent"}
+                ]
+            },
+            "code": {
+                "time_duration": "1 Hour",
+                "marks": 35,
+                "questions": [
+                    {"question": "Python program to approximate limit of sin(x)/x as x→0",  "options": [],"answer": "import math\nx = 0.000001\nprint(math.sin(x)/x)"},
+                    {"question": "Python program to calculate (1 + 1/x)^x as x→∞", "options": [], "answer": "x = 10000\nprint((1 + 1/x) ** x)"},
+                    {"question": "Trace output:\nimport math\nx = 0.000001\nprint(math.sin(x)/x)",  "options": [], "answer": "0.9999999999998334"},
+                    {"question": "Trace output:\nx = 10000\nprint((1 + 1/x)**x)", "options": [], "answer": "2.7181459"},
+                    {"question": "Trace output:\ndef f(x):\n    return (x**2 - 4)/(x - 2)\nprint(f(2.0001))",  "options": [],"answer": "4.0001"}
+                ]
+            },
+            "theory": {
+                "time_duration": "45 Minutes",
+                "marks": 30,
+                "questions": [
+                    {"question": "What is a limit?", "options": [], "answer": "The value a function approaches as the input approaches a specific point."},
+                    {"question": "What are left-hand and right-hand limits?",  "options": [],"answer": "Left-hand (x→a⁻) approaches from left; Right-hand (x→a⁺) from right. Limit exists if both equal."},
+                    {"question": "What is an indeterminate form?", "options": [], "answer": "A form like 0/0, ∞/∞, 0×∞, where direct substitution fails."},
+                    {"question": "Explain continuity using limits.",  "options": [],"answer": "A function is continuous at x=a if lim x→a f(x) = f(a)."},
+                    {"question": "What is the geometric meaning of a limit?", "options": [], "answer": "The point the function’s graph approaches as x gets closer to a value."},
+                    {"question": "Discuss types of discontinuities with examples.",  "options": [],"answer": "Removable: Limit exists but function value missing or different. Jump: Left and right limits unequal. Infinite: Function tends to ∞ near a point."},
+                    {"question": "Explain L’Hôpital’s Rule with examples.", "options": [], "answer": "If a limit gives 0/0 or ∞/∞, lim x→a f(x)/g(x) = lim x→a f'(x)/g'(x). Examples: lim x→0 sin(x)/x = 1; lim x→∞ ln(x)/x = 0."}
+                ]
             }
         }
+    },
+    "1": {  # Course: Web Technology
+       "84": {  # Topic: HTML Basics
+            "mcq": {
+            "time_duration": "15 Minutes",
+            "marks": 20,
+            "questions": [
+                {"question": "Which tag is used for paragraph?", "options": ["<p>", "<div>", "<span>", "<h1>"], "answer": "<p>"},
+                {"question": "Which tag is used for the largest heading?", "options": ["<h1>", "<h6>", "<head>", "<header>"], "answer": "<h1>"},
+                {"question": "Which tag is used to create a hyperlink?", "options": ["<a>", "<link>", "<url>", "<button>"], "answer": "<a>"},
+                {"question": "Which attribute specifies the link URL in <a>?", "options": ["href", "src", "link", "url"], "answer": "href"},
+                {"question": "Which tag is used for unordered list?", "options": ["<ul>", "<ol>", "<li>", "<list>"], "answer": "<ul>"},
+                {"question": "Which tag is used for ordered list?", "options": ["<ol>", "<ul>", "<li>", "<list>"], "answer": "<ol>"},
+                {"question": "Which tag is used for table row?", "options": ["<tr>", "<td>", "<table>", "<th>"], "answer": "<tr>"},
+                {"question": "Which tag is used for table header?", "options": ["<th>", "<td>", "<tr>", "<thead>"], "answer": "<th>"},
+                {"question": "Which tag is used to embed image?", "options": ["<img>", "<picture>", "<image>", "<src>"], "answer": "<img>"},
+                {"question": "Which attribute is used for alternative text for images?", "options": ["alt", "title", "src", "href"], "answer": "alt"},
+                {"question": "Which tag is used for bold text?", "options": ["<b>", "<strong>", "<bold>", "<em>"], "answer": "<b>"},
+                {"question": "Which tag is used for italic text?", "options": ["<i>", "<em>", "<italic>", "<it>"], "answer": "<i>"},
+                {"question": "Which tag defines a division or section?", "options": ["<div>", "<span>", "<section>", "<article>"], "answer": "<div>"},
+                {"question": "Which tag is inline element?", "options": ["<span>", "<div>", "<p>", "<header>"], "answer": "<span>"},
+                {"question": "Which tag is block-level element?", "options": ["<div>", "<span>", "<a>", "<img>"], "answer": "<div>"},
+                {"question": "Which tag is used for adding page title?", "options": ["<title>", "<head>", "<meta>", "<h1>"], "answer": "<title>"},
+                {"question": "Which tag is used to add a comment?", "options": ["<!-- -->", "//", "#", "/* */"], "answer": "<!-- -->"},
+                {"question": "Which tag is used for line break?", "options": ["<br>", "<hr>", "<lb>", "<break>"], "answer": "<br>"},
+                {"question": "Which tag is used to define a list item?", "options": ["<li>", "<ul>", "<ol>", "<list>"], "answer": "<li>"},
+                {"question": "Which tag is used for embedding video?", "options": ["<video>", "<media>", "<embed>", "<movie>"], "answer": "<video>"}
+            ]
+        },
+        "scenario-mcq": {
+            "time_duration": "20 Minutes",
+            "marks": 20,
+            "questions": [
+                {"question": "You want a navigation menu with links to Home, About, Contact. Which tag should you use?", "options": ["<nav>", "<div>", "<ul>", "<header>"], "answer": "<nav>"},
+                {"question": "You want a table with header and 3 rows of data. Which tags are necessary?", "options": ["<table>, <tr>, <th>, <td>", "<table>, <row>, <th>, <td>", "<table>, <tr>, <td>", "<table>, <tr>, <header>, <cell>"], "answer": "<table>, <tr>, <th>, <td>"},
+                {"question": "You want to display an image logo.png with alt text. Which tag and attribute?", "options": ["<img src='logo.png' alt='Logo'>", "<image src='logo.png' alt='Logo'>", "<picture src='logo.png'>", "<div src='logo.png'>"], "answer": "<img src='logo.png' alt='Logo'>"},
+                {"question": "You want text 'Important' to be emphasized. Which tag is correct?", "options": ["<strong>", "<b>", "<em>", "<i>"], "answer": "<strong>"},
+                {"question": "You need a horizontal line to separate sections. Which tag?", "options": ["<hr>", "<br>", "<line>", "<divider>"], "answer": "<hr>"},
+                {"question": "You want a form input for user email. Which tag?", "options": ["<input type='email'>", "<input type='text'>", "<form type='email'>", "<email>"], "answer": "<input type='email'>"},
+                {"question": "You want to embed a YouTube video. Which tag?", "options": ["<iframe>", "<embed>", "<video>", "<object>"], "answer": "<iframe>"},
+                {"question": "You want text aligned center. Which attribute/tag?", "options": ["<p style='text-align:center'>", "<center>", "<div align='center'>", "All of the above"], "answer": "All of the above"},
+                {"question": "You want a dropdown selection in a form. Which tag?", "options": ["<select>", "<input>", "<option>", "<dropdown>"], "answer": "<select>"},
+                {"question": "You want multiple checkboxes in a form. Which tag?", "options": ["<input type='checkbox'>", "<input type='radio'>", "<checkbox>", "<check>"], "answer": "<input type='checkbox'>"},
+                {"question": "You want a numbered list. Which tag?", "options": ["<ol>", "<ul>", "<li>", "<list>"], "answer": "<ol>"},
+                {"question": "You want a tooltip to appear on hover. Which attribute?", "options": ["title", "alt", "hover", "tooltip"], "answer": "title"},
+                {"question": "You want a footer section with copyright info. Which tag?", "options": ["<footer>", "<bottom>", "<section>", "<div>"], "answer": "<footer>"},
+                {"question": "You want a sidebar menu. Which semantic tag?", "options": ["<aside>", "<section>", "<nav>", "<div>"], "answer": "<aside>"},
+                {"question": "You want to highlight text. Which tag?", "options": ["<mark>", "<highlight>", "<em>", "<strong>"], "answer": "<mark>"},
+                {"question": "You want to group multiple form elements. Which tag?", "options": ["<fieldset>", "<form>", "<div>", "<section>"], "answer": "<fieldset>"},
+                {"question": "You want to create a clickable image link. Which combination?", "options": ["<a><img></a>", "<img><a></img>", "<link><img></link>", "<div><img></div>"], "answer": "<a><img></a>"},
+                {"question": "You want a semantic article block for blog content. Which tag?", "options": ["<article>", "<section>", "<div>", "<main>"], "answer": "<article>"},
+                {"question": "You want to create a form with submit button. Which tag?", "options": ["<button>", "<input type='submit'>", "Both", "<form>"], "answer": "Both"},
+                {"question": "You want to include external CSS file. Which tag?", "options": ["<link>", "<style>", "<css>", "<import>"], "answer": "<link>"}
+            ]
+        },
+        "code": {
+            "time_duration": "1 Hour",
+            "marks": 35,
+            "questions": [
+                {"question": "Write HTML code to create a hyperlink to https://example.com with text 'Visit Example'", "options": [], "answer": "<a href='https://example.com'>Visit Example</a>"},
+                {"question": "Write HTML code to create an ordered list with 3 items: Apple, Banana, Cherry", "options": [], "answer": "<ol><li>Apple</li><li>Banana</li><li>Cherry</li></ol>"},
+                {"question": "Trace the output: <ul><li>One</li><li>Two</li></ul> (How many bullets will appear?)", "options": [], "answer": "2 bullets"},
+                {"question": "Trace the output: <p style='text-align:center'>Hello</p>", "options": [], "answer": "Text 'Hello' centered"},
+                {"question": "Trace the output: <img src='logo.png' alt='Logo'>", "options": [], "answer": "Displays image 'logo.png' with alt text 'Logo'"}
+            ]
+        },
+        "theory": {
+            "time_duration": "45 Minutes",
+            "marks": 30,
+            "questions": [
+                {"question": "Define HTML and its purpose in web development.", "options": [], "answer": "HTML (HyperText Markup Language) is used to structure content on the web using elements and tags."},
+                {"question": "Explain the difference between block-level and inline elements.", "options": [], "answer": "Block-level elements start on a new line and take full width (<div>, <p>), while inline elements do not start on a new line and take only needed width (<span>, <a>)."},
+                {"question": "Describe the structure of an HTML document with its main sections.", "options": [], "answer": "An HTML document has <!DOCTYPE html>, <html>, <head> (meta info, title), <body> (visible content)."},
+                {"question": "Explain semantic HTML and provide examples.", "options": [], "answer": "Semantic HTML elements describe meaning: <header>, <footer>, <article>, <section>."},
+                {"question": "Explain the use of attributes in HTML tags with examples.", "options": [], "answer": "Attributes provide additional info about elements, e.g., <img src='logo.png' alt='Logo'> where src and alt are attributes."},
+                {"question": "Discuss the difference between <div> and <section>.", "options": [], "answer": "<div> is generic container, <section> is semantic section of related content."},
+                {"question": "Explain how HTML forms work and their main elements.", "options": [], "answer": "Forms collect user input. Main elements: <form>, <input>, <textarea>, <button>, <select>, <label>."}
+            ]
+        }
     }
+}
+}
 
     quiz_data = all_questions.get(str(course_id), {}).get(str(topic_id), {}).get(type, {})
     questions = quiz_data.get("questions", [])
     time_duration = quiz_data.get("time_duration", "N/A")
     marks = quiz_data.get("marks", "N/A")
 
-     # ----------- ✅ When user submits the quiz -----------
+    # ----------- When user submits the quiz (POST) -----------
     if request.method == "POST":
         user_answers = {}
         correct_count = 0
@@ -518,42 +593,37 @@ def quiz_page(request, course_id, topic_id, type):
 
             results.append({
                 "question": q["question"],
-                "options": q["options"],
+                "options": q.get("options", []),
                 "selected": selected,
                 "correct": correct,
                 "is_correct": is_correct,
             })
 
         total_score = correct_count
-        performance_rate = round((correct_count / len(questions)) * 100, 2)
+        performance_rate = round((correct_count / len(questions)) * 100, 2) if questions else 0
 
-        # 🧠 Simple AI-like analysis
-        weak_areas = "Conceptual misunderstanding" if performance_rate < 70 else "Minor errors"
-        improvement = (
-            "Review weak topics and practice more timed quizzes."
-            if performance_rate < 80 else
-            "Excellent work! Keep your consistency."
-        )
-        prediction = (
-            "Performance expected to improve with continued study."
-            if performance_rate < 75 else
-            "Strong performance trend likely to continue."
-        )
+        # AI feedback for code/theory
+        ai_feedback = ""
+        if type in ["mcq","scenario-mcq","code", "theory"]:
+            try:
+                ai_feedback = generate_ai_feedback(performance_rate, results)
+            except Exception as e:
+                ai_feedback = f"(Feedback unavailable — {str(e)})"
 
+        # Prepare context for quiz results
         context = {
             "course": course,
             "topic": topic,
             "type": type,
             "total_score": total_score,
             "performance_rate": performance_rate,
-            "weak_areas": weak_areas,
-            "improvement": improvement,
-            "prediction": prediction,
             "results": results,
+            "ai_feedback": ai_feedback,
         }
+
         return render(request, "accounts/quiz_result.html", context)
 
-    # ----------- When quiz page is first loaded -----------
+    # ----------- When quiz page is first loaded (GET) -----------
     context = {
         "username": request.user.username,
         "course": course,
@@ -564,68 +634,6 @@ def quiz_page(request, course_id, topic_id, type):
         "marks": marks,
     }
     return render(request, "accounts/quiz_page.html", context)
-#
-def evaluate_answer(user_answer, correct_answer, keywords=[]):
-    """
-    Evaluate theory/code answers using similarity and keyword match.
-    Returns (is_correct: bool, feedback: str)
-    """
-    if not user_answer:
-        return False, "Not answered"
-
-    user_answer = user_answer.strip().lower()
-    correct_answer = correct_answer.strip().lower()
-
-    # Similarity check
-    similarity = SequenceMatcher(None, user_answer, correct_answer).ratio()
-
-    # Keyword check
-    keyword_hits = sum(1 for k in keywords if k.lower() in user_answer)
-    keyword_score = keyword_hits / len(keywords) if keywords else 0
-
-    # Use whichever is higher
-    score = max(similarity, keyword_score)
-
-    if score > 0.7:
-        return True, "Mostly correct"
-    elif score > 0.4:
-        return False, "Partially correct"
-    else:
-        return False, "Incorrect"
-#
-def ai_quiz_analysis(results):
-    total = len(results)
-    correct_count = sum(1 for r in results if r["is_correct"])
-    performance_rate = round((correct_count / total) * 100, 2)
-
-    theory_incorrect = [r for r in results if r["question_type"] in ["theory", "code"] and not r["is_correct"]]
-    mcq_incorrect = [r for r in results if r["question_type"] == "mcq" and not r["is_correct"]]
-
-    weak_areas_list = []
-    if theory_incorrect:
-        weak_areas_list.append("Conceptual understanding in theory/code questions")
-    if mcq_incorrect:
-        weak_areas_list.append("Multiple-choice knowledge gaps")
-    if not weak_areas_list:
-        weak_areas_list.append("Minor mistakes")
-
-    weak_areas = ", ".join(weak_areas_list)
-
-    if performance_rate < 50:
-        improvement = "Focus on revising fundamental concepts and practice more questions."
-    elif performance_rate < 80:
-        improvement = "Review weak topics and take targeted practice quizzes."
-    else:
-        improvement = "Excellent work! Keep practicing to maintain consistency."
-
-    if performance_rate < 60:
-        prediction = "Performance may improve significantly with focused study."
-    elif performance_rate < 85:
-        prediction = "Steady improvement expected with continued practice."
-    else:
-        prediction = "Strong performance trend likely to continue."
-
-    return weak_areas, improvement, prediction, performance_rate
 
 #Upload marks
 @login_required(login_url='/accounts/login-page/')
@@ -1044,3 +1052,4 @@ Conversation so far:
         "conversation": request.session.get('conversation', []),
         "prompt": user_prompt
     })
+#

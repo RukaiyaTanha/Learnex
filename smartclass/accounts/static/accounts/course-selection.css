@@ -18,13 +18,17 @@ body {
 
 /* ===== Container ===== */
 .container {
-    background: #fff;
+    background-color: white;
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    width: 95%;
-    max-width: 800px;
-    padding: 25px 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 1300px;
+    padding: 25px;
     position: relative;
+    min-height: 95vh; /* ✅ increased height */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 /* ===== Header ===== */
@@ -73,7 +77,7 @@ header p {
 .selection-group {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px; /* ✅ reduced gap */
     flex-wrap: wrap;
 }
 .selection-group h2 {
@@ -84,11 +88,10 @@ header p {
 }
 .custom-select {
     position: relative;
-    flex: 1;
-    min-width: 100px;
+    flex: 0 0 auto;
 }
 .custom-select select {
-    width: 60%;
+    width: 360px;
     padding: 8px 12px;
     border-radius: 6px;
     border: 1px solid #ccc;
@@ -98,7 +101,7 @@ header p {
 .custom-select i {
     position: absolute;
     top: 50%;
-    right: 275px;
+    right: 10px; /* adjusted icon position */
     transform: translateY(-50%);
     color: #555;
 }
@@ -124,6 +127,7 @@ header p {
     gap: 15px;
     margin-top: 20px;
     margin-bottom: 30px;
+    flex-grow: 1; /* ✅ pushes footer to bottom */
 }
 
 /* ===== Course Cards ===== */
@@ -200,7 +204,6 @@ header p {
     cursor: pointer;
     transition: all 0.3s ease;
 }
-
 .quiz-option-card .remove-btn:hover {
     background: #c0392b;
     transform: translateY(-1px);
@@ -213,6 +216,7 @@ header p {
     background: #f8f9fa;
     padding: 15px 10px;
     border-radius: 15px;
+    margin-top: auto; /* ✅ stays at bottom */
 }
 
 .navigation-footer .nav-link {
@@ -235,7 +239,7 @@ header p {
         align-items: flex-start;
         gap: 10px;
     }
-    .custom-select { max-width: 100%; }
+    .custom-select select { width: 100%; }
     #add-course-btn { width: 100%; }
     .courses-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
     .navigation-footer { flex-wrap: wrap; gap: 10px; }

@@ -15,6 +15,7 @@
     <p>All lecture slides you uploaded</p>
   </header>
 
+  <div class="content">
   {% if messages %}
     <div class="messages">
       {% for message in messages %}
@@ -59,6 +60,7 @@
   {% else %}
     <p class="no-items">You haven't uploaded any syllabus yet.</p>
   {% endif %}
+</div>
 
   <div class="navigation-footer">
         <a href="{% url 'student_dashboard' %}" class="nav-link">

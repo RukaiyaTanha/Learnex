@@ -3,7 +3,7 @@ from django.http import JsonResponse,FileResponse
 from django.contrib.auth import get_user_model, authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
-from .models import Course, UserCourse,Topic, Question,Marks,Syllabus, QuizAttendance
+from .models import Course, UserCourse,Topic, Question,Marks,Syllabus, QuizAttendance,TeacherCourseSelection,StudentInfo,Section
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
@@ -19,7 +19,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 import mimetypes
 from django.db.models import F, Avg
-import json
+import csv, io, json
 import os
 import pdfplumber
 from PIL import Image
@@ -32,6 +32,7 @@ import google.generativeai as genai
 import markdown2
 from .ai_feedback import generate_ai_feedback
 from django.utils.safestring import mark_safe
+from datetime import datetime
 
 User = get_user_model()
 
@@ -90,17 +91,27 @@ def login_api(request):
             if not user.check_password(password):
                 return JsonResponse({"success": False, "message": "Invalid email or password"})
 
-            # Check role
+            # Check role match
             if getattr(user, "role", "").lower() != role.lower():
                 return JsonResponse({"success": False, "message": f"This account is not a {role}"})
 
             # Successful login
-            login(request, user)  # start session
+            login(request, user)
+
+            # ✅ Redirect URL based on role
+            if role.lower() == "student":
+                redirect_url = reverse("student_dashboard")
+            elif role.lower() == "teacher":
+                redirect_url = reverse("teacher_dashboard")
+            else:
+                redirect_url = reverse("student_dashboard")
+
             return JsonResponse({
                 "success": True,
                 "message": "Login successful",
                 "username": user.username,
-                "role": getattr(user, "role", "N/A")
+                "role": getattr(user, "role", "N/A"),
+                "redirect_url": redirect_url,
             })
 
         except User.DoesNotExist:
@@ -112,7 +123,7 @@ def login_api(request):
 def login_page(request):
     return render(request, "accounts/login.html")
 
-# Dashboard page (protected)
+# Student Dashboard page (protected)
 # --------------------------
 @login_required(login_url='/accounts/login-page/')
 def student_dashboard(request):
@@ -610,6 +621,21 @@ def quiz_page(request, course_id, topic_id, type):
             except Exception as e:
                 ai_feedback = f"(Feedback unavailable — {str(e)})"
 
+        week_number = datetime.now().isocalendar()[1] % 4  # Example: Mod 4 for 4 weeks pattern
+        if week_number == 0:
+            week_number = 4
+            
+        QuizAttendance.objects.update_or_create(
+            student=request.user,
+            course=course,
+            week=week_number,
+            month=datetime.now().month,  # add month
+            defaults={
+                "attended": True,
+                "date": datetime.now()
+                }
+        )    
+        
         # Prepare context for quiz results
         context = {
             "course": course,
@@ -811,6 +837,7 @@ def view_syllabus(request, pk):
 def calculate_cgpa_page(request):
     return render(request, 'accounts/calculate_cgpa.html')
 
+# overall performance
 @login_required(login_url='/accounts/login-page/')
 def overall_performance(request):
     user = request.user
@@ -857,6 +884,7 @@ def overall_performance(request):
     # ✅ Course-wise performance
     courses = []
     attendance_by_course = {}
+
     for mark in student_marks:
         total = (mark.quiz1 + mark.quiz2 + mark.quiz3 +
                  mark.attendance + mark.assignment + mark.presentation + mark.termexam) / 7
@@ -865,10 +893,14 @@ def overall_performance(request):
             "performance": round(total, 2)
         })
 
-        # ✅ Attendance based on quiz scores
+        # ✅ Attendance tracking from QuizAttendance model
+        course_attendance = QuizAttendance.objects.filter(student=user, course=mark.course)
         attendance_by_course[mark.course.name] = {}
-        for i, q_score in enumerate([mark.quiz1, mark.quiz2, mark.quiz3], start=1):
-            attendance_by_course[mark.course.name][f"Week {i}"] = "✔️" if q_score > 0 else "❌"
+
+        # Loop through 4 weeks (or however many weeks your system tracks)
+        for week in range(1, 5):
+            attended = course_attendance.filter(week=week, attended=True).exists()
+            attendance_by_course[mark.course.name][f"Week {week}"] = "✔️" if attended else "❌"
 
     # ✅ Predicted performance (simple logic)
     if performance_rate < 60:
@@ -878,7 +910,7 @@ def overall_performance(request):
     else:
         predicted_performance = round(performance_rate + 2, 2)
 
-    # ✅ Context
+    # ✅ Context for template
     context = {
         "completed_quizzes": completed_quizzes,
         "performance_rate": performance_rate,
@@ -887,7 +919,6 @@ def overall_performance(request):
         "courses": courses,
         "attendance_by_course": attendance_by_course,
     }
-
     return render(request, "accounts/overall_performance.html", context)
 
 # AIUB grade points mapping
@@ -1052,4 +1083,187 @@ Conversation so far:
         "conversation": request.session.get('conversation', []),
         "prompt": user_prompt
     })
-#
+#-----------------------------TEACHER--------------------------------------------
+# teacher Dashboard page (protected)
+@login_required(login_url='/accounts/login-page/')
+def teacher_dashboard(request):
+    user = request.user
+    context = {
+        "username": user.username,
+        "role": getattr(user, "role", "N/A"),
+    }
+    return render(request, "accounts/teacher_dashboard.html", context)
+
+# ---------- Teacher Course Selection Page ----------
+@login_required(login_url='/accounts/login-page/')
+def teacher_course_selection_page(request):
+    user = request.user
+    courses = Course.objects.all()
+
+    # Get all selections for this teacher
+    selections = TeacherCourseSelection.objects.filter(teacher=user)
+    # Dict: { "Spring": ["CSE101", "CSE102"], "Fall": ["CSE201"] }
+    semester_courses = {
+        sel.semester: list(sel.courses.values_list('code', flat=True))
+        for sel in selections
+    }
+
+    context = {
+        "courses": courses,
+        "semester_courses_json": json.dumps(semester_courses),  # for JS
+        "username": user.username,
+    }
+    return render(request, "accounts/teacher_course_selection.html", context)
+
+
+@csrf_exempt
+@login_required(login_url='/accounts/login-page/')
+def save_teacher_courses_api(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            semester = data.get("semester")
+            selected_codes = data.get("courses", [])
+
+            if not semester or not isinstance(selected_codes, list):
+                return JsonResponse({"success": False, "message": "Invalid data"})
+
+            user = request.user
+            selection, _ = TeacherCourseSelection.objects.get_or_create(
+                teacher=user, semester=semester
+            )
+
+            courses = Course.objects.filter(code__in=selected_codes)
+            selection.courses.set(courses)
+            selection.save()
+
+            return JsonResponse({
+                "success": True,
+                "message": f"Saved {len(selected_codes)} course(s) for {semester}.",
+                "semester": semester,
+                "courses": selected_codes
+            })
+
+        except Exception as e:
+            return JsonResponse({"success": False, "message": str(e)})
+
+    return JsonResponse({"success": False, "message": "Invalid request"})
+
+
+@login_required(login_url='/accounts/login-page/')
+def teacher_selected_courses_page(request):
+    user = request.user
+    selections = TeacherCourseSelection.objects.filter(teacher=user)
+    return render(request, "accounts/teacher_selected_courses.html", {
+        "username": user.username,
+        "selections": selections
+    })
+
+#----------------------
+@login_required(login_url='/accounts/login-page/')
+def upload_student_info_page(request):
+    user = request.user
+    selections = TeacherCourseSelection.objects.filter(teacher=user)
+
+    # Prepare dropdown: semester -> list of course names
+    semester_courses_dict = {}
+    for sel in selections:
+        course_list = list(sel.courses.values_list('name', flat=True))
+        semester_courses_dict[sel.semester] = course_list
+
+    if request.method == "POST":
+        semester = request.POST.get('semester')
+        course_name = request.POST.get('course')
+        section_name = request.POST.get('section')
+        csv_file = request.FILES.get('studentFile')
+
+        if not (semester and course_name and section_name and csv_file):
+            messages.error(request, "All fields are required!")
+            return redirect('upload_student_info_page')
+
+        # Get or create the course object
+        try:
+            course_obj = Course.objects.get(name=course_name)
+        except Course.DoesNotExist:
+            messages.error(request, f"Course '{course_name}' not found!")
+            return redirect('upload_student_info_page')
+
+        # Get or create section
+        section_obj, _ = Section.objects.get_or_create(
+            teacher=user,
+            semester=semester,
+            course=course_obj,
+            section_name=section_name
+        )
+
+        # **Delete old students before uploading new ones**
+        section_obj.students.all().delete()
+
+        # Parse CSV and insert students
+        try:
+            decoded_file = csv_file.read().decode('utf-8')
+            io_string = io.StringIO(decoded_file)
+            reader = csv.DictReader(io_string)
+
+            count = 0
+            for row in reader:
+                student_name = row.get('student_name') or row.get('name')
+                student_id = row.get('student_id')
+                email = row.get('email')
+
+                if not student_name or not student_id or not email:
+                    continue  # skip incomplete rows
+
+                StudentInfo.objects.create(
+                    section=section_obj,
+                    student_name=student_name,
+                    student_id=student_id,
+                    email=email
+                )
+                count += 1
+
+            messages.success(
+                request,
+                f"Successfully replaced and uploaded {count} students for {course_name} ({section_name}) - {semester}."
+            )
+            return redirect('upload_student_info_page')
+
+        except Exception as e:
+            messages.error(request, f"Error processing CSV file: {str(e)}")
+            return redirect('upload_student_info_page')
+
+    context = {
+        "username": user.username,
+        "semester_courses_dict": semester_courses_dict,
+        "semester_courses_json": json.dumps(semester_courses_dict),  # for JS
+        "section_choices": ["A", "B", "C", "D", "E", "F"],
+    }
+    return render(request, "accounts/upload_student_info.html", context)
+
+@login_required(login_url='/accounts/login-page/')
+def uploaded_students_page(request):
+    user = request.user
+
+    # Fetch all sections created by this teacher
+    sections = Section.objects.filter(teacher=user).order_by('semester', 'course__name', 'section_name')
+
+    # Prepare data: semester -> course -> section -> students
+    data = {}
+    for section in sections:
+        sem = section.semester
+        course = section.course.name
+        sec_name = section.section_name
+        students = section.students.all()
+
+        if sem not in data:
+            data[sem] = {}
+        if course not in data[sem]:
+            data[sem][course] = {}
+        data[sem][course][sec_name] = students
+
+    context = {
+        "username": user.username,
+        "uploaded_data": data
+    }
+
+    return render(request, "accounts/uploaded_students.html", context)

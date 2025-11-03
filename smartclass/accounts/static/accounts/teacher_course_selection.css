@@ -1,0 +1,381 @@
+/* ===== Global ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+h3{
+    font-size: medium;
+    margin-bottom: 10px;
+}
+body {
+    background: #f5f7fa;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    color: #333;
+}
+h2{
+   font-size: medium;
+   margin-bottom: 20px;
+}
+/* ===== Container ===== */
+.container {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 1300px;
+    padding: 25px;
+    position: relative;
+    min-height: 95vh; /* increased height */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* ===== Header ===== */
+header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+header h1 {
+    font-size: 26px;
+    color: #1b4ed7; /* Teacher accent color */
+    margin-bottom: 6px;
+}
+
+header p {
+    font-size: 14px;
+    color: #555;
+}
+
+/* ===== Back Button ===== */
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    color: #1b4ed7;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 12px;
+    background: #eef4ff;
+    box-shadow: 0 2px 6px rgba(27,78,215,0.2);
+    font-size: 14px;
+    transition: all 0.3s ease, transform 0.2s ease;
+}
+
+.back-button:hover {
+    background: #dfe9ff;
+    box-shadow: 0 5px 12px rgba(27,78,215,0.3);
+    transform: translateY(-1px);
+}
+
+.back-button i {
+    margin-right: 6px;
+    font-size: 14px;
+}
+
+/* ===== Semester Selection Panel ===== */
+.form-group {
+    margin-bottom: 20px;
+    position: relative;
+    max-width: 300px;
+}
+
+.form-group label {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.form-group select {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    appearance: none;
+    cursor: pointer;
+    background: #fff url("data:image/svg+xml,%3Csvg viewBox='0 0 140 140' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolygon points='0,0 140,0 70,70' fill='%23575'/%3E%3C/svg%3E") no-repeat right 10px center;
+    background-size: 12px;
+    transition: all 0.3s ease;
+}
+
+.form-group select:hover {
+    border-color: #2575fc;
+    box-shadow: 0 2px 6px rgba(37, 117, 252, 0.2);
+}
+
+/* Container for select + button */
+.selection-panel {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* space between dropdown and button */
+    margin: 10px 0;
+    width: 30%;
+}
+.selection-panel h3 {
+  display: inline-block;
+  margin-right: 10px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Style for the select dropdown */
+.selection-panel select {
+    flex: 1; /* take up available space */
+    padding: 5px 15px;
+    font-size: 16px;
+    border: 2px solid #4A90E2; /* your blue color */
+    border-radius: 8px;
+    background-color: #ffffff;
+    color: #333;
+    transition: border 0.3s, box-shadow 0.3s;
+    width: 130%;
+}
+
+.selection-panel select:focus {
+    outline: none;
+    border-color: #357ABD; /* darker blue on focus */
+    box-shadow: 0 0 5px rgba(53, 122, 189, 0.5);
+}
+
+/* Style for Add Course button */
+.selection-panel .start-btn {
+    padding: 10px 20px;
+    background-color: #4A90E2;
+    color: #fff;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.selection-panel .start-btn:hover {
+    background-color: #357ABD;
+    transform: scale(1.05);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .selection-panel {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .selection-panel .start-btn {
+        width: 100%;
+    }
+}
+
+
+.custom-select {
+    position: relative;
+    flex: 0 0 auto;
+}
+
+.custom-select select {
+    width: 360px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.custom-select i {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    color: #555;
+}
+
+#add-course-btn {
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: none;
+    background: #1b4ed7;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+#add-course-btn:hover {
+    background: #153db3;
+}
+
+/* ===== Courses Grid ===== */
+.courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+    margin-bottom: 30px;
+    flex-grow: 1;
+}
+
+/* ===== Course Cards ===== */
+.quiz-option-card, .course-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid #eee;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.quiz-option-card:hover, .course-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+}
+
+.quiz-option-card h3, .course-card h3 {
+    font-size: 16px;
+    color: #1b4ed7;
+    margin-bottom: 8px;
+}
+
+/* ===== Course Status & Lock Button ===== */
+.course-status {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.course-status.unlocked {
+    color: #2ecc71;
+}
+
+.course-status.locked {
+    color: #e74c3c;
+}
+
+.toggle-lock-btn {
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    background: #1b4ed7;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.toggle-lock-btn:hover {
+    background: #153db3;
+}
+
+/* ===== Save & Continue Button ===== */
+#save-courses-btn {
+    margin-top: 20px;
+    margin-bottom: 30px;
+    padding: 10px 20px;
+    font-size: 15px;
+    border-radius: 8px;
+    border: none;
+    background: #1b4ed7;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: block;
+}
+
+#save-courses-btn:hover {
+    background: #153db3;
+    transform: translateY(-1px);
+}
+
+/* ===== Remove Button on Course Cards ===== */
+.quiz-option-card .remove-btn {
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    background: #e74c3c;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.quiz-option-card .remove-btn:hover {
+    background: #c0392b;
+    transform: translateY(-1px);
+}
+
+/* ===== Footer Navigation ===== */
+.navigation-footer {
+    display: flex;
+    justify-content: space-around;
+    background: #f8f9fa;
+    padding: 15px 10px;
+    border-radius: 15px;
+    margin-top: auto;
+}
+
+.navigation-footer .nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #555;
+    font-size: 13px;
+    transition: all 0.3s ease;
+}
+
+.navigation-footer .nav-link.active,
+.navigation-footer .nav-link:hover {
+    color: #1b4ed7;
+}
+
+.navigation-footer i {
+    font-size: 18px;
+    margin-bottom: 4px;
+}
+
+/* ===== Responsive ===== */
+@media(max-width:768px){
+    .selection-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .custom-select select {
+        width: 100%;
+    }
+    #add-course-btn {
+        width: 100%;
+    }
+    .courses-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+    .navigation-footer {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+}
+
+@media(max-width:480px){
+    .container {
+        padding: 20px 15px;
+    }
+    .courses-grid {
+        grid-template-columns: 1fr;
+    }
+}

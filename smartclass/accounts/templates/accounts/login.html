@@ -79,13 +79,12 @@ document.querySelector(".login-form").addEventListener("submit", async function(
 
         const data = await response.json();
 
-        if (data.success) {
-            alert("✅ Login successful! Welcome " + data.username + " (" + data.role + ")");
-            window.location.href = "{% url 'student_dashboard' %}";
-        } else {
-            alert("❌ " + data.message);
-        }
-
+    if (data.success) {
+    alert("✅ Login successful! Welcome " + data.username + " (" + data.role + ")");
+    window.location.href = data.redirect_url;  // <-- now dynamic redirect
+    } else {
+    alert("❌ " + data.message);
+    }
     } catch (err) {
         console.error(err);
         alert("❌ Server error. Try again later.");

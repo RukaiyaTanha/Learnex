@@ -36,7 +36,15 @@ urlpatterns = [
     path("current-semester-cg/", views.current_semester_cg, name="current_semester_cg"),
     path('overall-performance/', views.overall_performance, name='overall_performance'),
     path("ai-assistant/", views.ai_assistant, name="ai_assistant"),
-    # ✅ password reset
+    #password reset
     path('reset-password/<uidb64>/<token>/', views.reset_password_page, name='reset_password_page'),
     path('reset-password-api/', views.reset_password_api, name='reset_password_api'),
+
+    #Teacher
+    path("teacher-dashboard/", views.teacher_dashboard, name="teacher_dashboard"),
+    path('teacher/course-selection/', views.teacher_course_selection_page, name='teacher_course_selection_page'),
+    path('teacher/save-courses/', views.save_teacher_courses_api, name='save_teacher_courses_api'),
+    path('teacher/selected-courses/', views.teacher_selected_courses_page, name='teacher_selected_courses_page'),
+    path('teacher/upload-students/', views.upload_student_info_page, name='upload_student_info_page'),
+    path('teacher/uploaded-students/', views.uploaded_students_page, name='uploaded_students_page'),
 ]

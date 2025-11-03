@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
+from datetime import datetime
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
@@ -96,9 +97,60 @@ class QuizAttendance(models.Model):
     week = models.PositiveIntegerField()
     attended = models.BooleanField(default=True)
     date = models.DateTimeField(auto_now_add=True)
+    month = models.PositiveIntegerField(default=datetime.now().month)  # 🆕 Add this line
+    score = models.FloatField(default=0)
 
     class Meta:
-        unique_together = ('student', 'course', 'week')
+        unique_together = ('student', 'course', 'week', 'month')
 
     def __str__(self):
-        return f"{self.student.username} - {self.course.name} (Week {self.week})"    
+        return f"{self.student.username} - {self.course.name} (Week {self.week}, Month {self.month})"
+
+# ---------------------- Teacher ----------------------
+# ---------------------- Teacher Course selection ----------------------
+class TeacherCourseSelection(models.Model):
+    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    semester = models.CharField(max_length=20, choices=[
+        ("Spring24-25", "Spring 24-25"),
+        ("Summer24-25", "Summer 24-25"),
+        ("Fall24-25", "Fall 24-25"),
+        ("Spring25-26", "Spring 25-26"),
+        ("Summer25-26", "Summer 25-26"),
+        ("Fall25-26", "Fall 25-26"),
+    ])
+    courses = models.ManyToManyField('Course', blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.teacher.username} - {self.semester}"
+    
+# ---------------------- Section ----------------------
+class Section(models.Model):
+    SECTION_CHOICES = [
+        ("A", "A"), ("B", "B"), ("C", "C"),
+        ("D", "D"), ("E", "E"), ("F", "F"),
+    ]
+
+    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    semester = models.CharField(max_length=20)
+    course = models.ForeignKey('Course', on_delete=models.CASCADE)
+    section_name = models.CharField(max_length=2, choices=SECTION_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("teacher", "semester", "course", "section_name")
+
+    def __str__(self):
+        return f"{self.course.code} - {self.section_name} ({self.semester})"
+
+
+# ---------------------- Student Info ----------------------
+class StudentInfo(models.Model):
+    section = models.ForeignKey(Section, on_delete=models.CASCADE, related_name='students')
+    student_name = models.CharField(max_length=100)
+    student_id = models.CharField(max_length=50)
+    email = models.EmailField()
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.student_name} ({self.student_id}) - {self.section}"

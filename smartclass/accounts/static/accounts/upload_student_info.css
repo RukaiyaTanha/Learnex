@@ -294,6 +294,47 @@ header p {
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(0,0,0,0.1);
 }
+/* Delete button style */
+.delete-btn {
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.3s ease;
+}
+
+.delete-btn:hover {
+    background: #b91c1c;
+    transform: scale(1.05);
+}
+.messages {
+  margin-bottom: 20px;
+}
+
+.message {
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.message.success {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #10b981;
+}
+
+.message.error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #f87171;
+}
 
 /* ===== Responsive ===== */
 @media(max-width:768px){

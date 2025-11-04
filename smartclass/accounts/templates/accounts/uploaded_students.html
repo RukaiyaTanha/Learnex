@@ -22,7 +22,17 @@
       <h3 class="course-title">{{ course }}</h3>
       {% for sec_name, students in sections.items %}
         <div class="section-card">
-          <h4>Section {{ sec_name }}</h4>
+          <h4>
+            Section {{ sec_name }}
+            <!-- Delete form/button -->
+            <form method="post" action="{% url 'delete_section' %}" style="display:inline;">
+              {% csrf_token %}
+              <input type="hidden" name="semester" value="{{ sem }}">
+              <input type="hidden" name="course" value="{{ course }}">
+              <input type="hidden" name="section" value="{{ sec_name }}">
+              <button type="submit" class="delete-btn"><i class="fas fa-trash"></i> Delete</button>
+            </form>
+          </h4>
           <ul>
             {% for student in students %}
               <li>{{ student.student_name }} - {{ student.student_id }} - {{ student.email }}</li>
@@ -44,7 +54,7 @@
     <i class="fas fa-upload"></i><span>Upload</span>
   </a>
   <a href="{% url 'uploaded_students_page' %}" class="nav-link active">
-    <i class="fas fa-book"></i><span>Student Info</span>
+    <i class="fas fa-users"></i><span>Student Info</span>
   </a>
   <a href="#" class="nav-link">
     <i class="fas fa-cog"></i><span>Settings</span>

@@ -1267,3 +1267,26 @@ def uploaded_students_page(request):
     }
 
     return render(request, "accounts/uploaded_students.html", context)
+
+@login_required(login_url='/accounts/login-page/')
+def delete_section(request):
+    if request.method == "POST":
+        user = request.user
+        semester = request.POST.get('semester')
+        course_name = request.POST.get('course')
+        section_name = request.POST.get('section')
+
+        try:
+            course_obj = Course.objects.get(name=course_name)
+            section = Section.objects.get(
+                teacher=user,
+                semester=semester,
+                course=course_obj,
+                section_name=section_name
+            )
+            section.delete()  
+            messages.success(request, f"Deleted section {section_name} ({course_name}) successfully!")
+        except Section.DoesNotExist:
+            messages.error(request, "Section not found or you don't have permission!")
+
+    return redirect('uploaded_students_page')

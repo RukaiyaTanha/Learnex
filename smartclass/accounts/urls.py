@@ -47,4 +47,5 @@ urlpatterns = [
     path('teacher/selected-courses/', views.teacher_selected_courses_page, name='teacher_selected_courses_page'),
     path('teacher/upload-students/', views.upload_student_info_page, name='upload_student_info_page'),
     path('teacher/uploaded-students/', views.uploaded_students_page, name='uploaded_students_page'),
+    path('accounts/teacher/delete-section/', views.delete_section, name='delete_section'),
 ]

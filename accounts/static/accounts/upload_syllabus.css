@@ -1,0 +1,197 @@
+/* ===== Container ===== */
+/* ===== Global ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: #f5f7fa;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    color: #333;
+}
+
+/* ===== Container ===== */
+.container {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 1300px;
+    padding: 25px 20px;
+    position: relative;
+}
+/* ===== Header ===== */
+header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+header h1 {
+    font-size: 26px;
+    color: #2575fc;
+    margin-bottom: 6px;
+}
+header p {
+    font-size: 14px;
+    color: #555;
+}
+
+/* ===== Form Section ===== */
+.form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background: #f9fbfd;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+}
+
+.form-section > div {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #444;
+    font-size: 14px;
+}
+
+select, textarea, input[type="file"] {
+    padding: 12px 15px;
+    border-radius: 10px;
+    border: 1px solid #d1d9e6;
+    width: 40%;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: #fff;
+    outline: none;
+}
+
+select:focus, textarea:focus, input[type="file"]:focus {
+    border-color: #2575fc;
+    box-shadow: 0 0 6px rgba(37,117,252,0.2);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.upload-btn {
+    padding: 12px 25px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    background: #2575fc;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: block;
+    width: 15%;
+}
+
+.upload-btn:hover {
+    background: #1c64e0;
+    transform: translateY(-1px);
+}
+
+/* Optional: make file input more visible */
+input[type="file"]::file-selector-button {
+    padding: 8px 12px;
+    background: #2575fc;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+    background: #1a5ed8;
+}
+/* ===== Footer Navigation ===== */
+.navigation-footer {
+    display: flex;
+    justify-content: space-around;
+    background: #f8f9fa;
+    padding: 15px 10px;
+    border-radius: 15px;
+    margin-top: 30px;
+}
+.nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #666;
+    font-size: 13px;
+}
+.nav-link i { font-size: 18px; margin-bottom: 4px; }
+.nav-link.active, .nav-link:hover { color: #2575fc; }
+
+/* ===== Toast Notification ===== */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #27ae60;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.5s ease;
+    z-index: 9999;
+}
+.toast.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Messages container */
+.messages {
+    margin: 15px 0;
+    width: 50%;
+    margin-left: 190px;
+}
+
+/* Individual message */
+.message {
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-weight: 500;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Success message */
+.message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+/* Error message */
+.message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Info message */
+.message.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}

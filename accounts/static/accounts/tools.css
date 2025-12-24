@@ -1,0 +1,150 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: #f0f2f5;
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    color: #333;
+}
+
+/* Container */
+.container {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 1300px;
+    padding: 20px 16px;
+}
+
+/* Header */
+header {
+    text-align: center;
+    margin-bottom: 18px;
+}
+
+header h1 {
+    font-size: 22px;
+    color: #2575fc;
+    margin-bottom: 4px;
+}
+
+header p {
+    font-size: 13px;
+    color: #555;
+}
+
+/* Section Title */
+.section-title {
+    margin-top: 30px;
+    margin-bottom: 12px;
+    font-size: 18px;
+    color: #2575fc;
+    border-left: 4px solid #2575fc;
+    padding-left: 8px;
+}
+
+/* Grid layout (smaller cards) */
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-gap: 16px;
+    margin-bottom: 16px;
+}
+
+/* Tool card (smaller) */
+.tool-card {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    text-align: center;
+    transition: 0.25s ease;
+    min-height: 170px;
+}
+
+.tool-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+}
+
+/* Icon smaller */
+.card-icon {
+    font-size: 30px;
+    color: #2575fc;
+    margin-bottom: 10px;
+}
+
+/* Title */
+.tool-card h3 {
+    font-size: 16px;
+    color: #222;
+    margin-bottom: 6px;
+}
+
+/* Description */
+.tool-card p {
+    font-size: 13px;
+    color: #444;
+    margin-bottom: 12px;
+}
+
+/* Button */
+.visit-btn {
+    display: inline-block;
+    padding: 7px 12px;
+    font-size: 13px;
+    background-color: #2575fc;
+    color: #fff;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: 0.25s;
+}
+
+.visit-btn:hover {
+    background-color: #2575fc;
+}
+
+/* Footer Nav */
+.navigation-footer {
+    position: fixed;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 40px);
+    max-width: 1300px;
+
+    display: flex;
+    justify-content: space-around;
+    background: #f8f9fa;
+    padding: 12px 8px;
+    border-radius: 15px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    z-index: 1000;
+}
+
+.nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #555;
+    font-size: 12px;
+}
+
+.nav-link i {
+    font-size: 16px;
+    margin-bottom: 3px;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: #2575fc;
+}

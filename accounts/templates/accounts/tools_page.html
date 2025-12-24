@@ -1,0 +1,506 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Tools Hub</title>
+    <link rel="stylesheet" href="{% static 'accounts/tools.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+<div class="container">
+
+    <header class="header">
+        <h1>Hi {{ username }}, explore your smart tools</h1>
+        <p>Your quick access hub for AI, research, coding, productivity and learning tools</p>
+    </header>
+
+    <div class="content-section">
+
+        <!-- 1. AI Chatbots -->
+        <h2 class="section-title">AI Chatbots</h2>
+        <div class="tools-grid">
+            <div class="tool-card">
+                <i class="fas fa-robot card-icon"></i>
+                <h3>ChatGPT</h3>
+                <p>General AI assistant for learning, coding and research.</p>
+                <a href="https://chat.openai.com" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-brain card-icon"></i>
+                <h3>Google Gemini</h3>
+                <p>Google's multimodal reasoning AI.</p>
+                <a href="https://gemini.google.com" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-microchip card-icon"></i>
+                <h3>DeepSeek AI</h3>
+                <p>Fast, lightweight AI with strong reasoning.</p>
+                <a href="https://chat.deepseek.com" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-comments card-icon"></i>
+                <h3>Meta Llama Chat</h3>
+                <p>Open-source AI chatbot for research and Q&A.</p>
+                <a href="https://www.meta.com/research" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-lightbulb card-icon"></i>
+                <h3>Copilot (Microsoft)</h3>
+                <p>AI coding assistant integrated with IDEs.</p>
+                <a href="https://copilot.microsoft.com" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-robot card-icon"></i>
+                <h3>Mistral AI Chat</h3>
+                <p>Open-source friendly model chat.</p>
+                <a href="https://chat.mistral.ai" target="_blank" class="visit-btn">Visit</a>
+            </div>
+        </div>
+
+        <!-- 2. Research & Academic Writing -->
+        <h2 class="section-title">Research & Academic Writing</h2>
+        <div class="tools-grid">
+            <div class="tool-card">
+                <i class="fas fa-book card-icon"></i>
+                <h3>Zotero</h3>
+                <p>Reference manager for research papers.</p>
+                <a href="https://www.zotero.org" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-file-alt card-icon"></i>
+                <h3>Mendeley</h3>
+                <p>Manage citations and research PDFs.</p>
+                <a href="https://www.mendeley.com" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-search card-icon"></i>
+                <h3>Semantic Scholar</h3>
+                <p>AI-powered scientific literature search.</p>
+                <a href="https://www.semanticscholar.org" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-network-wired card-icon"></i>
+                <h3>ResearchGate</h3>
+                <p>Academic network and scholarly Q&A.</p>
+                <a href="https://www.researchgate.net" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-search-plus card-icon"></i>
+                <h3>Google Scholar</h3>
+                <p>Academic papers and literature search engine.</p>
+                <a href="https://scholar.google.com" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-project-diagram card-icon"></i>
+                <h3>Connected Papers</h3>
+                <p>Visual paper graph for research exploration.</p>
+                <a href="https://www.connectedpapers.com" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-file-alt card-icon"></i>
+                <h3>SciSpace</h3>
+                <p>Paper explanation and writing assistant.</p>
+                <a href="https://www.typeset.io" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-pencil-alt card-icon"></i>
+                <h3>PaperPal</h3>
+                <p>Grammar & rewriting for academic papers.</p>
+                <a href="https://www.paperpal.com" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-file-code card-icon"></i>
+                <h3>Typeset.io</h3>
+                <p>Automatic formatting for research articles.</p>
+                <a href="https://typeset.io" target="_blank" class="visit-btn">Visit</a>
+            </div>
+        </div>
+
+        <!-- 3. Plagiarism & AI Detection -->
+        <h2 class="section-title">Plagiarism & AI Detection</h2>
+        <div class="tools-grid">
+            <div class="tool-card">
+                <i class="fas fa-shield-alt card-icon"></i>
+                <h3>Turnitin</h3>
+                <p>Plagiarism detection for academic submissions.</p>
+                <a href="https://www.turnitin.com" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-check-circle card-icon"></i>
+                <h3>Quillbot Plagiarism Checker</h3>
+                <p>Check originality of written content.</p>
+                <a href="https://quillbot.com/plagiarism-checker" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-search-plus card-icon"></i>
+                <h3>PlagScan</h3>
+                <p>Another plagiarism detection platform.</p>
+                <a href="https://www.plagscan.com" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-robot card-icon"></i>
+                <h3>GPTZero</h3>
+                <p>AI content detection for academic writing authenticity.</p>
+                <a href="https://gptzero.me" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-search card-icon"></i>
+                <h3>Originality.ai</h3>
+                <p>Checks text and AI-generated content.</p>
+                <a href="https://originality.ai" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-network-wired card-icon"></i>
+                <h3>CrossPlag</h3>
+                <p>Detect plagiarism across multiple sources.</p>
+                <a href="https://crossplag.com" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-copy card-icon"></i>
+                <h3>SmallSEOTools Plagiarism Checker</h3>
+                <p>Free plagiarism checker with online tools suite.</p>
+                <a href="https://smallseotools.com/plagiarism-checker/" target="_blank" class="visit-btn">Visit</a>
+            </div>
+        </div>
+
+        <!-- 4. Document Conversion Tools -->
+        <h2 class="section-title">Document Conversion Tools</h2>
+        <div class="tools-grid">
+            <div class="tool-card">
+                <i class="fas fa-file-pdf card-icon"></i>
+                <h3>SmallPDF</h3>
+                <p>PDF ↔ Word, compress, merge, convert.</p>
+                <a href="https://smallpdf.com" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-file-export card-icon"></i>
+                <h3>ILovePDF</h3>
+                <p>PDF editing, splitting, and converting.</p>
+                <a href="https://ilovepdf.com" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-file-alt card-icon"></i>
+                <h3>PDFGear</h3>
+                <p>File compressing and conversion tools.</p>
+                <a href="https://pdfgear.com" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-file-code card-icon"></i>
+                <h3>DocuPub</h3>
+                <p>PDF and document file compressing service.</p>
+                <a href="https://www.docupub.com" target="_blank" class="visit-btn">Visit</a>
+            </div>
+            <div class="tool-card">
+                <i class="fas fa-file-alt card-icon"></i>
+                <h3>PDF24 Tools</h3>
+                <p>Convert and edit PDF files online.</p>
+                <a href="https://tools.pdf24.org" target="_blank" class="visit-btn">Visit</a>
+            </div>
+        </div>
+
+<h2 class="section-title">Design & UI Tools</h2>
+<div class="tools-grid">
+
+<div class="tool-card">
+    <i class="fas fa-paint-brush card-icon"></i>
+    <h3>Canva</h3>
+    <p>Create posters, presentations, and graphics.</p>
+    <a href="https://www.canva.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-object-group card-icon"></i>
+    <h3>Figma</h3>
+    <p>UI/UX designing and collaborative prototyping.</p>
+    <a href="https://www.figma.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-palette card-icon"></i>
+    <h3>Adobe Express</h3>
+    <p>Quick design, logos, templates, and editing tools.</p>
+    <a href="https://www.adobe.com/express" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-layer-group card-icon"></i>
+    <h3>Gravit Designer</h3>
+    <p>Free vector design tool for UI and graphics.</p>
+    <a href="https://www.designer.io" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-image card-icon"></i>
+    <h3>Pixlr</h3>
+    <p>Online photo editor and design tool.</p>
+    <a href="https://pixlr.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-pencil-alt card-icon"></i>
+    <h3>Photopea</h3>
+    <p>Photoshop alternative in the browser.</p>
+    <a href="https://www.photopea.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+</div>
+
+<h2 class="section-title">Coding & Development Tools</h2>
+<div class="tools-grid">
+
+<div class="tool-card">
+    <i class="fas fa-code card-icon"></i>
+    <h3>GitHub</h3>
+    <p>Version control and project hosting.</p>
+    <a href="https://github.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-code-branch card-icon"></i>
+    <h3>GitLab</h3>
+    <p>Repository hosting and DevOps tools.</p>
+    <a href="https://gitlab.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-comments card-icon"></i>
+    <h3>Stack Overflow</h3>
+    <p>Programming questions and community answers.</p>
+    <a href="https://stackoverflow.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-book card-icon"></i>
+    <h3>W3Schools</h3>
+    <p>Web development tutorials and references.</p>
+    <a href="https://www.w3schools.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-laptop-code card-icon"></i>
+    <h3>Replit</h3>
+    <p>Online coding, compiling, and collaboration.</p>
+    <a href="https://replit.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-globe card-icon"></i>
+    <h3>Glitch</h3>
+    <p>Host full-stack web apps easily.</p>
+    <a href="https://glitch.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-pencil-ruler card-icon"></i>
+    <h3>CodePen</h3>
+    <p>Frontend playground for HTML, CSS, JS.</p>
+    <a href="https://codepen.io" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-paper-plane card-icon"></i>
+    <h3>Postman</h3>
+    <p>API testing and debugging tool.</p>
+    <a href="https://www.postman.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-cloud card-icon"></i>
+    <h3>Swagger Editor</h3>
+    <p>Design and document APIs using OpenAPI.</p>
+    <a href="https://swagger.io/tools/swagger-editor/" target="_blank" class="visit-btn">Visit</a>
+</div>
+</div>
+
+<h2 class="section-title">Project Management & Organization</h2>
+<div class="tools-grid">
+
+<div class="tool-card">
+    <i class="fas fa-database card-icon"></i>
+    <h3>Notion</h3>
+    <p>Notes, tasks, and workspace management.</p>
+    <a href="https://www.notion.so" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-tasks card-icon"></i>
+    <h3>Trello</h3>
+    <p>Kanban-based project boards.</p>
+    <a href="https://trello.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-layer-group card-icon"></i>
+    <h3>ClickUp</h3>
+    <p>Project management and team workflow.</p>
+    <a href="https://clickup.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-sticky-note card-icon"></i>
+    <h3>Google Keep</h3>
+    <p>Notes and quick reminders.</p>
+    <a href="https://keep.google.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-check card-icon"></i>
+    <h3>Todoist</h3>
+    <p>Task management with reminders.</p>
+    <a href="https://todoist.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-clipboard-list card-icon"></i>
+    <h3>Asana</h3>
+    <p>Team projects, tasks, and planning.</p>
+    <a href="https://asana.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+</div>
+
+<h2 class="section-title">Productivity Tools</h2>
+<div class="tools-grid">
+
+<div class="tool-card">
+    <i class="fas fa-spell-check card-icon"></i>
+    <h3>Grammarly</h3>
+    <p>Grammar checker and writing assistant.</p>
+    <a href="https://grammarly.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-sync-alt card-icon"></i>
+    <h3>Quillbot</h3>
+    <p>Rewriting and paraphrasing tool.</p>
+    <a href="https://quillbot.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-pen-fancy card-icon"></i>
+    <h3>Hemingway Editor</h3>
+    <p>Write clearer and more concise text.</p>
+    <a href="https://hemingwayapp.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-language card-icon"></i>
+    <h3>DeepL</h3>
+    <p>High-quality translation tool.</p>
+    <a href="https://deepl.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-file-word card-icon"></i>
+    <h3>Google Docs</h3>
+    <p>Cloud-based document editing.</p>
+    <a href="https://docs.google.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-file-alt card-icon"></i>
+    <h3>Office Online</h3>
+    <p>Free online Word, Excel, and PowerPoint.</p>
+    <a href="https://www.office.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+</div>
+
+<h2 class="section-title">Math & Science Tools</h2>
+<div class="tools-grid">
+
+<div class="tool-card">
+    <i class="fas fa-calculator card-icon"></i>
+    <h3>Wolfram Alpha</h3>
+    <p>Computational engine for equations and analysis.</p>
+    <a href="https://www.wolframalpha.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-chart-line card-icon"></i>
+    <h3>Desmos</h3>
+    <p>Graphing calculator for math functions.</p>
+    <a href="https://www.desmos.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-shapes card-icon"></i>
+    <h3>GeoGebra</h3>
+    <p>Interactive math tools for geometry and algebra.</p>
+    <a href="https://www.geogebra.org" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-square-root-alt card-icon"></i>
+    <h3>Symbolab</h3>
+    <p>Solve equations step-by-step.</p>
+    <a href="https://symbolab.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-divide card-icon"></i>
+    <h3>Mathway</h3>
+    <p>Math problem solver for all levels.</p>
+    <a href="https://www.mathway.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+</div>
+
+<h2 class="section-title">Learning Platforms</h2>
+<div class="tools-grid">
+
+<div class="tool-card">
+    <i class="fas fa-graduation-cap card-icon"></i>
+    <h3>Khan Academy</h3>
+    <p>Free courses across multiple subjects.</p>
+    <a href="https://www.khanacademy.org" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-laptop card-icon"></i>
+    <h3>Coursera</h3>
+    <p>University-level online courses.</p>
+    <a href="https://www.coursera.org" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-video card-icon"></i>
+    <h3>Udemy</h3>
+    <p>Skill-based courses for all fields.</p>
+    <a href="https://www.udemy.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-university card-icon"></i>
+    <h3>edX</h3>
+    <p>Higher education courses and certificates.</p>
+    <a href="https://www.edx.org" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-lightbulb card-icon"></i>
+    <h3>Brilliant.org</h3>
+    <p>Interactive problem-solving lessons.</p>
+    <a href="https://www.brilliant.org" target="_blank" class="visit-btn">Visit</a>
+</div>
+
+<div class="tool-card">
+    <i class="fas fa-chalkboard-teacher card-icon"></i>
+    <h3>Skillshare</h3>
+    <p>Creative and professional courses.</p>
+    <a href="https://www.skillshare.com" target="_blank" class="visit-btn">Visit</a>
+</div>
+</div>
+
+    </div>
+
+    <div class="navigation-footer">
+        <a href="{% url 'student_dashboard' %}" class="nav-link"><i class="fas fa-home"></i><span>Home</span></a>
+        <a href="{% url 'course_selection_page' %}" class="nav-link"><i class="fas fa-book"></i><span>Courses</span></a>
+        <a href="{% url 'quiz_selection_page' %}" class="nav-link"><i class="fas fa-question-circle"></i><span>Quiz</span></a>
+        <a href="#" class="nav-link"><i class="fas fa-chart-bar"></i><span>Progress</span></a>
+        <a href="#" class="nav-link"><i class="fas fa-cog"></i><span>Settings</span></a>
+    </div>
+
+</div>
+</body>
+</html>

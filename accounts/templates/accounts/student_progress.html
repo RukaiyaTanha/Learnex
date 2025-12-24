@@ -1,0 +1,137 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Progress</title>
+
+    <link rel="stylesheet" href="{% static 'accounts/progress.css' %}">
+    <link rel="stylesheet" href="{% static 'accounts/overall_performance.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- Header -->
+    <header>
+        <h1>Hi {{ username }}, Your Progress Overview</h1>
+        <p>
+            This page shows how your performance has evolved over time for each course.
+            Use it to understand trends and improvement patterns.
+        </p>
+    </header>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <section class="charts-container">
+            <div id="charts-container" class="progress-grid"></div>
+        </section>
+    </main>
+
+    <!-- Navigation Footer -->
+    <div class="navigation-footer">
+        <a href="{% url 'student_dashboard' %}" class="nav-link">
+            <i class="fas fa-home"></i><span>Home</span>
+        </a>
+        <a href="{% url 'course_selection_page' %}" class="nav-link">
+            <i class="fas fa-book"></i><span>Courses</span>
+        </a>
+        <a href="{% url 'quiz_selection_page' %}" class="nav-link">
+            <i class="fas fa-question-circle"></i><span>Quiz</span>
+        </a>
+        <a href="{% url 'student_progress' %}" class="nav-link active">
+            <i class="fas fa-chart-line"></i><span>Progress</span>
+        </a>
+        <a href="#" class="nav-link">
+            <i class="fas fa-cog"></i><span>Settings</span>
+        </a>
+    </div>
+
+</div>
+
+<script>
+const progressData = JSON.parse('{{ progress_json|escapejs }}');
+const container = document.getElementById('charts-container');
+
+let chartIndex = 0;
+
+// Color palette for topic lines
+const colors = [
+    '#1b4ed7', '#16a34a', '#dc2626', '#f59e0b',
+    '#7c3aed', '#0f766e', '#be185d'
+];
+
+for (const course in progressData) {
+    chartIndex++;
+
+    const card = document.createElement('div');
+    card.className = 'course-progress-card';
+
+    const title = document.createElement('h3');
+    title.textContent = course;
+    card.appendChild(title);
+
+    const canvas = document.createElement('canvas');
+    canvas.id = `chart-${chartIndex}`;
+    card.appendChild(canvas);
+
+    container.appendChild(card);
+
+    const datasets = [];
+    let colorIndex = 0;
+
+    for (const topic in progressData[course]) {
+        const topicData = progressData[course][topic];
+
+        datasets.push({
+            label: topic,
+            data: topicData.map(item => item.score),
+            borderColor: colors[colorIndex % colors.length],
+            backgroundColor: 'transparent',
+            tension: 0.3,
+            borderWidth: 2
+        });
+
+        colorIndex++;
+    }
+
+    const labels = progressData[course][Object.keys(progressData[course])[0]]
+        .map(item => item.date);
+
+    new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Score (%)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Attempt Date'
+                    }
+                }
+            }
+        }
+    });
+}
+</script>
+</body>
+</html>

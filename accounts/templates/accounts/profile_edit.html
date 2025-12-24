@@ -1,0 +1,100 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Profile</title>
+<link rel="stylesheet" href="{% static 'accounts/profile_edit.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="container">
+    <div class="top-bar">
+        <h1>Edit Profile</h1>
+    </div>
+
+    <form id="editProfileForm" method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="profile-avatar">
+        {% if user.profile_picture %}
+            <img src="{{ user.profile_picture.url }}" alt="Profile Picture" class="profile-pic">
+        {% else %}
+            <i class="fas fa-user-circle"></i>
+        {% endif %}
+        <input type="file" id="profile_picture" name="profile_picture" accept="image/*">
+    </div>
+
+    <label>Username</label>
+    <input type="text" id="username" name="username" value="{{ username }}" required>
+
+    <label>First Name</label>
+    <input type="text" id="first_name" name="first_name" value="{{ first_name }}" required>
+
+    <label>Last Name</label>
+    <input type="text" id="last_name" name="last_name" value="{{ last_name }}" required>
+
+    <label>Email</label>
+    <input type="email" id="email" name="email" value="{{ email }}" required>
+
+    <label>Role</label>
+    <input type="text" value="{{ role }}" disabled>
+
+    <button type="submit" class="save-btn">Save Changes</button>
+    <p id="message" class="message"></p>
+</form>
+    <div class="navigation-footer">
+        <a href="{% url 'student_dashboard' %}" class="nav-link"><i class="fas fa-home"></i><span>Home</span></a>
+        <a href="{% url 'profile_page' %}" class="nav-link "><i class="fas fa-user"></i><span>Profile</span></a>
+        <a href="#" class="nav-link active"><i class="fas fa-pen"></i><span>Edit</span></a>
+        <a href="#" class="nav-link"><i class="fas fa-cog"></i><span>Settings</span></a>
+    </div>
+
+<script>
+const avatar = document.querySelector('.profile-avatar');
+const fileInput = document.getElementById('profile_picture');
+
+avatar.addEventListener('click', () => {
+    fileInput.click();
+});
+fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const img = avatar.querySelector('img');
+            if(img) {
+                img.src = e.target.result;
+            } else {
+                avatar.innerHTML = `<img src="${e.target.result}" class="profile-pic">`;
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+});
+document.getElementById("editProfileForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const form = document.getElementById("editProfileForm");
+    const formData = new FormData(form);
+
+    const res = await fetch("{% url 'update_profile_api' %}", {
+      method: "POST",
+      headers: { "X-CSRFToken": "{{ csrf_token }}" },
+      body: formData,
+    });
+
+    const json = await res.json();
+    const msg = document.getElementById("message");
+    msg.textContent = json.message;
+    msg.style.color = json.success ? "green" : "red";
+
+    if (json.success) {
+        setTimeout(() => {
+            window.location.href = "{% url 'profile_page' %}";
+        }, 1000);
+    }
+});
+</script>
+

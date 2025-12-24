@@ -1,0 +1,171 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: #ffffff;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #333;
+}
+
+.container {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 450px;
+    padding: 30px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+header h1 {
+    color: #2575fc;
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+header h2 {
+    font-size: 18px;
+    font-weight: 500;
+    color: #555;
+}
+
+.user-type {
+    display: flex;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 25px;
+    border: 1px solid #ddd;
+}
+
+.option {
+    flex: 1;
+    text-align: center;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.option.selected {
+    background-color: #bcbfc4;
+    color: rgb(0, 0, 0);
+}
+
+.option:not(.selected):hover {
+    background-color: #f5f5f5;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #444;
+}
+
+input {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 15px;
+    transition: border 0.3s ease;
+}
+
+input:focus {
+    outline: none;
+    border-color: #2575fc;
+    box-shadow: 0 0 0 2px rgba(37, 117, 252, 0.2);
+}
+
+.form-buttons {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+button {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.login-btn {
+    background-color: #2575fc;
+    color: white;
+}
+
+.login-btn:hover {
+    background-color: #1c64e0;
+}
+
+.logout-btn {
+    background-color: #f3f4f6;
+    color: #666;
+}
+
+.logout-btn:hover {
+    background-color: #e5e7eb;
+}
+
+/* Optional: Quick styling for selected role */
+.option.selected {
+    background-color: #4f46e5;
+    color: white;
+    border-radius: 8px;
+}
+.option {
+    display: inline-block;
+    padding: 10px 20px;
+    margin: 0 5px;
+    cursor: pointer;
+    border: 1px solid #cbd5e1;
+     border-radius: 8px;
+}
+.links {
+    display: flex;
+    justify-content: space-between;
+}
+
+.links a {
+    color: #2575fc;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.3s ease;
+}
+
+.links a:hover {
+    color: #1c64e0;
+    text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 20px;
+    }
+    
+    .links {
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+    }
+}

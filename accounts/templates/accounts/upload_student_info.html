@@ -1,0 +1,107 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Upload Student Information</title>
+<link rel="stylesheet" href="{% static 'accounts/upload_student_info.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="container">
+
+<section class="section-student-panel">
+<header class="dashboard-header">
+  <h1>Hi {{ username }}, Upload Student Information</h1>
+  <p>Upload student lists for each course section.</p>
+</header>
+{% if messages %}
+  <div class="messages">
+    {% for message in messages %}
+      <div class="message {{ message.tags }}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<form id="uploadForm" method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+<div class="form-group">
+    <label for="semesterSelect"><i class="fas fa-calendar-alt"></i> Semester</label>
+     <select id="semesterSelect" name="semester" required>
+        <option value="" disabled selected>Select Semester</option>
+        {% for sem, courses in semester_courses_dict.items %}
+        <option value="{{ sem }}">{{ sem }}</option>
+        {% endfor %}
+    </select>
+</div>
+  <div class="form-group">
+    <label for="courseSelect"><i class="fas fa-book"></i> Course</label>
+    <select id="courseSelect" name="course" required>
+      <option value="" disabled>Select Course</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label for="sectionSelect"><i class="fas fa-users"></i> Section</label>
+    <select id="sectionSelect" name="section" required>
+      <option value="" disabled selected>Select Section</option>
+      {% for sec in section_choices %}
+        <option value="{{ sec }}">{{ sec }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="form-group">
+    <label for="studentFile"><i class="fas fa-file-csv"></i> Upload Student File (.csv only)</label>
+    <input type="file" id="studentFile" name="studentFile" accept=".csv" required />
+  </div>
+  <button type="submit" class="submit-btn">
+    <i class="fas fa-cloud-upload-alt"></i> Upload
+  </button>
+</form>
+
+<div class="navigation-footer">
+  <a href="{% url 'teacher_dashboard' %}" class="nav-link">
+    <i class="fas fa-home"></i><span>Home</span>
+  </a>
+  <a href="{% url 'upload_student_info_page' %}" class="nav-link active">
+    <i class="fas fa-upload"></i><span>Upload</span>
+  </a>
+  <a href="{% url 'uploaded_students_page' %}" class="nav-link">
+    <i class="fas fa-users"></i><span>Student Info</span>
+  </a>
+  <a href="#" class="nav-link">
+    <i class="fas fa-cog"></i><span>Settings</span>
+  </a>
+</div>
+
+</section>
+</div>
+
+<script>
+const semesterSelect = document.getElementById('semesterSelect');
+const courseSelect = document.getElementById('courseSelect');
+const semesterCourses = JSON.parse('{{ semester_courses_json|escapejs }}');
+
+function populateCourses(semester) {
+  const courses = semesterCourses[semester] || [];
+  courseSelect.innerHTML = '<option value="" disabled selected>Select Course</option>';
+  courses.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    courseSelect.appendChild(opt);
+  });
+}
+
+semesterSelect.addEventListener('change', () => {
+  populateCourses(semesterSelect.value);
+});
+window.addEventListener('DOMContentLoaded', () => {
+  if (semesterSelect.value) {
+    populateCourses(semesterSelect.value);
+  }
+});
+</script>
+</body>
+</html>

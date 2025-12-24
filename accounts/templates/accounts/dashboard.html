@@ -1,0 +1,246 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Dashboard</title>
+<link rel="stylesheet" href="{% static 'accounts/dashboard4.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+<div class="container dashboard-container">
+  <!-- Header -->
+  <div class="header-section">
+    <div class="welcome-message">
+      <h1>Hi {{ username }},</h1>
+      <p id="studentMessages"></p>
+    </div>
+
+    <div class="profile-section">
+      <a href="{% url 'profile_page' %}" class="profile-info-link">
+        <div class="profile-icon">
+          {% if user.profile_picture %}
+              <img src="{{ user.profile_picture.url }}" alt="Profile Picture" class="dashboard-profile-pic">
+          {% else %}
+              <i class="fas fa-user-graduate"></i>
+          {% endif %}
+        </div>
+        <div class="profile-info">
+          <span class="profile-name">{{ username }}</span>
+          <span class="profile-role">{{ role }}</span>
+        </div>
+      </a>
+      <button id="logoutBtn" class="logout-btn" title="Logout">
+        <i class="fas fa-sign-out-alt"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Dashboard Cards -->
+  <div class="dashboard-grid">
+    <div class="dashboard-card">
+      <a href="{% url 'course_selection_page' %}" class="card-link">
+        <div class="card-icon"><i class="fas fa-book"></i></div>
+        <h3>Choose your course names</h3>
+        <p>Select and manage your courses for this semester</p>
+        <div class="card-action"><span>Let's go</span><i class="fas fa-arrow-right"></i></div>
+      </a>
+    </div>
+
+    <div class="dashboard-card">
+      <a href="{% url 'quiz_selection_page' %}" class="card-link">
+        <div class="card-icon"><i class="fas fa-question-circle"></i></div>
+        <h3>Let's have a quiz</h3>
+        <p>Test your knowledge with interactive quizzes</p>
+        <div class="card-action"><span>Let's go</span><i class="fas fa-arrow-right"></i></div>
+      </a>
+    </div>
+
+    <div class="dashboard-card">
+      <a href="{% url 'edit_marks_page' %}" class="card-link">
+        <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+        <h3>View your class marks</h3>
+        <p>Track your academic performance over time</p>
+        <div class="card-action"><span>Let's go</span><i class="fas fa-arrow-right"></i></div>
+      </a>
+    </div>
+
+    <div class="dashboard-card">
+      <a href="{% url 'ai_quiz_page' %}" class="card-link">
+        <div class="card-icon"><i class="fas fa-brain"></i></div>
+        <h3>Wanna test more?</h3>
+        <p>Additional practice tests and exercises</p>
+        <div class="card-action"><span>Let's go</span><i class="fas fa-arrow-right"></i></div>
+      </a>
+    </div>
+    <div class="dashboard-card">
+      <a href="{% url 'ai_assistant' %}" class="card-link">
+        <div class="card-icon"><i class="fas fa-robot"></i></div>
+        <h3>AI Learning Assistant</h3>
+        <p>Ask questions, explore course topics, and receive AI-based explanations using your uploaded syllabus</p>
+        <div class="card-action"><span>Let's go</span><i class="fas fa-arrow-right"></i></div>
+      </a>
+    </div>
+
+    <div class="dashboard-card">
+      <a href="{% url 'upload_syllabus_page' %}" class="card-link">
+        <div class="card-icon"><i class="fas fa-file-alt"></i></div>
+        <h3>Upload/View your course notes</h3>
+        <p>Share your syllabus for personalized learning</p>
+        <div class="card-action"><span>Let's go</span><i class="fas fa-arrow-right"></i></div>
+      </a>
+    </div>
+
+    <div class="dashboard-card">
+    <a href="{% url 'overall_performance' %}" class="card-link">
+      <div class="card-icon"><i class="fas fa-chart-pie"></i></div>
+      <h3>View your overall performance</h3>
+      <p>See your progress across all courses</p>
+      <div class="card-action"><span>Let's go</span><i class="fas fa-arrow-right"></i></div>
+    </a>
+    </div>
+
+<div class="dashboard-card">
+  <a href="{% url 'calculate_cgpa_page' %}" class="card-link">
+    <div class="card-icon"><i class="fas fa-calculator"></i></div>
+    <h3>Calculate Your CGPA</h3>
+    <p>Enter your grades and credits to know your overall CGPA</p>
+    <div class="card-action"><span>Let's go</span><i class="fas fa-arrow-right"></i></div>
+  </a>
+</div>
+
+<div class="dashboard-card">
+  <a href="{% url 'tools_page' %}" class="card-link">
+    <div class="card-icon"><i class="fas fa-toolbox"></i></div>
+    <h3>Explore Useful Tools</h3>
+    <p>Access study tools, AI assistants, converters, research utilities</p>
+    <div class="card-action"><span>Let's go</span><i class="fas fa-arrow-right"></i></div>
+  </a>
+</div>
+  </div>
+
+  <!-- Navigation Footer -->
+  <div class="navigation-footer">
+    <a href="#" class="nav-link active"><i class="fas fa-home"></i><span>Home</span></a>
+    <a href="#" class="nav-link"><i class="fas fa-calendar-alt"></i><span>Schedule</span></a>
+    <a href="#" class="nav-link"><i class="fas fa-envelope"></i><span>Messages</span></a>
+    <a href="{% url 'student_progress' %}" class="nav-link"><i class="fas fa-chart-bar"></i><span>Progress</span></a>
+    <a href="#" class="nav-link"><i class="fas fa-cog"></i><span>Settings</span></a>
+  </div>
+</div>
+
+<!-- Settings Sidebar -->
+<div id="settingsSidebar" class="settings-sidebar">
+  <div class="settings-header">
+    <h3>Settings</h3>
+    <button id="closeSettings" class="close-btn"><i class="fas fa-times"></i></button>
+  </div>
+  <ul class="settings-list">
+    <li class="dark-toggle"><i class="fas fa-moon"></i><span> Dark Mode</span></li>
+    <li><i class="fas fa-bell"></i> Notifications</li>
+    <li><i class="fas fa-lock"></i> Privacy & Security</li>
+    <li><i class="fas fa-language"></i> Language</li>
+    <li><i class="fas fa-user-cog"></i> Account Settings</li>
+  </ul>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  const icon = document.querySelector('.nav-link i.fa-cog');
+  const settingsNav = icon ? icon.closest('.nav-link') : null;
+  const sidebar = document.getElementById('settingsSidebar');
+  const closeBtn = document.getElementById('closeSettings');
+
+  if (settingsNav && sidebar) {
+    settingsNav.addEventListener('click', e => {
+      e.preventDefault();
+      sidebar.classList.toggle('open');
+    });
+
+    closeBtn?.addEventListener('click', () => sidebar.classList.remove('open'));
+    document.addEventListener('keydown', e => e.key === 'Escape' && sidebar.classList.remove('open'));
+    document.addEventListener('click', e => {
+      if (!sidebar.classList.contains('open')) return;
+      if (sidebar.contains(e.target) || settingsNav.contains(e.target)) return;
+      sidebar.classList.remove('open');
+    });
+  }
+  /* ---------- DARK MODE ---------- */
+  const darkToggle = document.querySelector('.dark-toggle');
+  const body = document.body;
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    body.classList.add('dark-mode');
+    darkToggle.querySelector('i').classList.replace('fa-moon', 'fa-sun');
+    darkToggle.querySelector('span').textContent = ' Light Mode';
+  }
+
+  darkToggle.addEventListener('click', () => {
+    const isDark = body.classList.toggle('dark-mode');
+    if (isDark) {
+      localStorage.setItem('theme', 'dark');
+      darkToggle.querySelector('i').classList.replace('fa-moon', 'fa-sun');
+      darkToggle.querySelector('span').textContent = ' Light Mode';
+    } else {
+      localStorage.setItem('theme', 'light');
+      darkToggle.querySelector('i').classList.replace('fa-sun', 'fa-moon');
+      darkToggle.querySelector('span').textContent = ' Dark Mode';
+    }
+  });
+  
+  const studentMessages = [
+    "Welcome back! Let’s make today a step toward your success.",
+    "Keep learning — every quiz brings you closer to mastery!",
+    "You’re doing amazing. Let’s aim for even better results today.",
+    "Ready to learn and grow? Let’s make progress together.",
+    "Stay curious, stay motivated — your hard work pays off.",
+    "Let’s achieve new goals and break old limits!",
+    "Small progress every day leads to big success. Let’s go!"
+  ];
+
+  const randomMessage = studentMessages[Math.floor(Math.random() * studentMessages.length)];
+  const studentMsgEl = document.getElementById("studentMessages");
+  if (studentMsgEl) studentMsgEl.textContent = randomMessage;
+
+  const logoutBtn = document.getElementById('logoutBtn');
+  logoutBtn.addEventListener('click', async function () {
+    const confirmed = confirm("Are you sure you want to log out?");
+    if (!confirmed) return;
+
+    const response = await fetch("{% url 'logout_api' %}", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+    });
+    const data = await response.json();
+
+    if (data.success) {
+      alert("Logged out successfully!");
+      window.location.href = "{% url 'login_page' %}";
+    } else {
+      alert("Logout failed: " + data.message);
+    }
+  });
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+});
+</script>
+</body>
+</html>

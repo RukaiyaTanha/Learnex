@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration - Smart Class Performance Tracker</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'accounts/registration3.css' %}">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Smart Class Performance Tracker</h1>
+            <h2>Registration Form</h2>
+        </header>
+
+        <form class="registration-form">
+            <div class="form-group">
+                <div class="input-with-icon">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="first_name" placeholder="Enter your first name" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="input-with-icon">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="last_name" placeholder="Enter your last name" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="input-with-icon">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="name" placeholder="Enter your username" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="input-with-icon">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="email" placeholder="Enter your email address" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="input-with-icon">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="password" placeholder="Enter your password" required>
+                </div>
+                <div class="password-hint">
+                    <i class="fas fa-info-circle"></i> Your password must be a unique combination (e.g., 1,2,3,a,d,v,A,C,G...)
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="input-with-icon">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="confirm-password" placeholder="Enter your confirm password" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="input-with-icon">
+                    <i class="fas fa-briefcase"></i>
+                    <select id="role" required>
+                        <option value="" disabled selected>Select your role</option>
+                        <option value="Student">Student</option>
+                        <option value="Teacher">Teacher</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn"> Create Profile </button>
+        </form>
+
+        <div class="links">
+            <a href="{% url 'login_page' %}"><i class="fas fa-arrow-left"></i> Back to Login</a>
+        </div>
+    </div>
+
+<script>
+    document.querySelector(".registration-form").addEventListener("submit", async function(e) {
+        e.preventDefault();
+        const name = document.getElementById("name").value;
+        const first_name = document.getElementById("first_name").value;
+        const last_name = document.getElementById("last_name").value;
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        const confirmPassword = document.getElementById("confirm-password").value;
+        const role = document.getElementById("role").value;
+
+        if(password !== confirmPassword){
+            alert("Passwords do not match!");
+            return;
+        }
+
+        try {
+            const response = await fetch("http://127.0.0.1:8000/accounts/register/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, first_name, last_name, email, password, role })
+            });
+
+            const data = await response.json();
+            if(data.success){
+                alert("Registration successful! Redirecting...");
+                window.location.href = "/accounts/login-page/";
+            } else {
+                alert("❌ " + data.message);
+            }
+        } catch(err){
+            console.error(err);
+            alert("Server error");
+        }
+    });
+</script>
+</body>
+</html>

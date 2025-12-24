@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Selected Courses</title>
+<link rel="stylesheet" href="{% static 'accounts/teacher_course_selection.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>{{ username }}’s Selected Courses</h1>
+    <p>Here are your selected courses and their statuses.</p>
+  </header>
+
+  {% for sel in selections %}
+  <h3>Semester: {{ sel.semester }}</h3>
+  <div class="courses-grid">
+    {% for course in sel.courses.all %}
+      <div class="quiz-option-card">
+        <h3>{{ course.name }}</h3>
+        <div class="course-status unlocked"><i class="fas fa-check"></i> Assigned</div>
+      </div>
+    {% empty %}
+      <p>No courses selected for this semester.</p>
+    {% endfor %}
+  </div>
+  {% endfor %}
+
+  <div class="navigation-footer">
+      <a href="{% url 'teacher_dashboard' %}" class="nav-link">
+          <i class="fas fa-home"></i>
+          <span>Home</span>
+      </a>
+      <a href="{% url 'teacher_course_selection_page' %}" class="nav-link">
+          <i class="fas fa-book"></i>
+          <span>Courses</span>
+      </a>
+      <a href="{% url 'selected_courses_page' %}" class="nav-link active">
+            <i class="fas fa-bookmark"></i>
+            <span>My Courses</span>
+      </a>
+      <a href="#" class="nav-link">
+          <i class="fas fa-cog"></i>
+          <span>Settings</span>
+      </a>
+  </div>
+</div>
+</body>
+</html>

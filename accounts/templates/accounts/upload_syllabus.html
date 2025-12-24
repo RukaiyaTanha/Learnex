@@ -1,0 +1,75 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Syllabus - Smart Class</title>
+<link rel="stylesheet" href="{% static 'accounts/upload_syllabus.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="container">
+    <header>
+            <h1>Hi {{ request.user.username }}, Upload Syllabus</h1>
+            <p>Choose your course, add topic name, and upload lecture slide</p>
+    </header>
+
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            <p class="message {% if message.tags %}{{ message.tags }}{% endif %}">
+                {{ message }}
+            </p>
+        {% endfor %}
+    </div>
+{% endif %}
+
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-section">
+            <div class="form-group">
+                <label>Select Course</label>
+                <select name="course">
+                    <option value="" disabled selected>Select course</option>
+                    {% for course in courses %}
+                        <option value="{{ course.id }}">{{ course.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Topic Name</label>
+                <textarea name="topic_name" rows="2" placeholder="Enter topic name..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Lecture Slide</label>
+                <input type="file" name="lecture_slide" accept="*/*">
+            </div>
+
+            <button type="submit" class="upload-btn">Upload</button>
+        </div>
+    </form>
+
+    <div class="navigation-footer">
+        <a href="{% url 'student_dashboard' %}" class="nav-link">
+            <i class="fas fa-home"></i><span>Home</span>
+        </a>
+        <a href="{% url 'upload_syllabus_page' %}" class="nav-link active">
+            <i class="fas fa-file-upload"></i><span>Upload Syllabus</span>
+        </a>
+        <a href="{% url 'selected_syllabus_page' %}" class="nav-link">
+            <i class="fas fa-file-alt"></i><span>Selected Syllabus</span>
+        </a>
+        <a href="{% url 'student_view_syllabus' %}" class="nav-link">
+            <i class="fas fa-eye"></i><span>View Teacher's Notes</span>
+        </a>
+        <a href="#" class="nav-link">
+            <i class="fas fa-cog"></i><span>Settings</span>
+        </a>
+    </div>
+</div>
+</body>
+</html>

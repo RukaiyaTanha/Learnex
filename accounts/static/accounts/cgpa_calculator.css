@@ -1,0 +1,152 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: #f5f7fa;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #333;
+    padding: 20px;
+}
+
+.container {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    max-width: 900px;
+    padding: 25px;
+    position: relative;
+}
+/* ===== Header ===== */
+header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+header h1 {
+    font-size: 26px;
+    color: #2575fc;
+    margin-bottom: 6px;
+}
+header p {
+    font-size: 14px;
+    color: #555;
+}
+
+.semester-row {
+  margin-bottom: 15px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.semester-row label {
+  width: 120px;
+}
+.semester-row input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+button {
+  padding: 10px 18px;
+  margin: 8px 4px;
+  border: none;
+  border-radius: 6px;
+  background-color: #2575fc;
+  color: white;
+  cursor: pointer;
+}
+button:hover {
+  background-color: #1c64e0;
+}
+.result {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 1.2em;
+  margin-bottom: 20px;
+}
+.cgpa-result-card {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  padding: 15px 20px;
+  background-color: #f0f8ff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  text-align: center;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.cgpa-result-card p {
+  margin: 8px 0;
+}
+
+.cgpa-result-card span {
+  color: #2575fc;
+  font-weight: bold;
+}
+
+/* ===== University Selection ===== */
+.university-selection {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    font-size: 16px;
+}
+
+.university-selection label {
+    font-weight: 600;
+    color: #333;
+}
+
+.university-selection select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.university-selection select:hover {
+    border-color: #4CAF50;
+    background-color: #fff;
+}
+
+.university-selection select:focus {
+    outline: none;
+    border-color: #2575fc;
+    box-shadow: 0 0 5px rgba(37, 117, 252, 0.5);
+}
+
+/* ===== Footer Navigation ===== */
+.navigation-footer {
+    display: flex;
+    justify-content: space-around;
+    background: #f8f9fa;
+    padding: 15px 10px;
+    border-radius: 15px;
+}
+
+.navigation-footer .nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #555;
+    font-size: 13px;
+    transition: all 0.3s ease;
+}
+.navigation-footer .nav-link.active,
+.navigation-footer .nav-link:hover { color: #2575fc; }
+.navigation-footer i { font-size: 18px; margin-bottom: 4px; }
+

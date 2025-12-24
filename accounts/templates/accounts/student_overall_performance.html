@@ -1,0 +1,93 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ student.username }} — Overall Performance</title>
+  <link rel="stylesheet" href="{% static 'accounts/overall_performance.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+    .container { width: 90%; max-width: 1000px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    header h1 { margin: 0 0 10px 0; }
+    header p { color: #555; margin-bottom: 20px; }
+    section { margin-bottom: 30px; }
+    h2, h3 { color: #333; }
+    ul { list-style: none; padding: 0; }
+    ul li { padding: 5px 0; border-bottom: 1px solid #eee; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    table th, table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    table th { background: #f0f0f0; }
+    .status.good { color: green; font-weight: bold; }
+    .status.average { color: orange; font-weight: bold; }
+    .status.poor { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>{{ student.username }} — Overall Performance</h1>
+      <p>View student's academic progress, quizzes, assignments, and predicted performance.</p>
+    </header>
+    <section class="summary">
+      <h2>Student Summary</h2>
+      <p><strong>Completed Quizzes:</strong> {{ completed_quizzes }}</p>
+      <p>
+        <strong>Performance Rate:</strong> {{ performance_rate }}%
+        <span class="status {% if performance_rate > 80 %}good{% elif performance_rate > 60 %}average{% else %}poor{% endif %}">
+          {% if performance_rate > 80 %}Excellent{% elif performance_rate > 60 %}Good{% else %}Needs Work{% endif %}
+        </span>
+      </p>
+      <p><strong>Improvement Rate:</strong> +{{ improvement_rate }}%</p>
+      <p><strong>Predicted Performance:</strong> {{ predicted_performance }}%</p>
+    </section>
+    <section class="course-performance">
+      <h2>Course-wise Performance</h2>
+      <ul>
+        {% for course in courses %}
+          <li>
+            <strong>{{ course.name }}</strong> — {{ course.performance }}%
+          </li>
+        {% empty %}
+          <li>No course performance data available.</li>
+        {% endfor %}
+      </ul>
+    </section>
+    <section class="attendance">
+      <h2>Quiz Attendance by Week</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Course</th>
+            <th>Week 1</th>
+            <th>Week 2</th>
+            <th>Week 3</th>
+            <th>Week 4</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for course, weeks in attendance_by_course.items %}
+          <tr>
+            <td>{{ course }}</td>
+            <td>{{ weeks."Week 1"|default:"❌" }}</td>
+            <td>{{ weeks."Week 2"|default:"❌" }}</td>
+            <td>{{ weeks."Week 3"|default:"❌" }}</td>
+            <td>{{ weeks."Week 4"|default:"❌" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5">No attendance records found</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+    <div class="navigation-footer">
+      <a href="{% url 'teacher_dashboard' %}" class="nav-link"><i class="fas fa-home"></i> Home</a>
+      <a href="{% url 'teacher_students_page' %}" class="nav-link"><i class="fas fa-users"></i> Students</a>
+      <a href="#" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
+    </div>
+  </div>
+</body>
+</html>

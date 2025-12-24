@@ -1,0 +1,80 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Assistant</title>
+  <link rel="stylesheet" href="{% static 'accounts/ai_assistant.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    textarea {
+      width: 100%;
+      height: 120px;
+      resize: none;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+      margin-top: 10px;
+      transition: border 0.3s, box-shadow 0.3s;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #2575fc;
+      box-shadow: 0 0 5px rgba(37, 117, 252, 0.5);
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Hi {{ request.user.username }}, how can I help you today?</h1>
+        <p>Your personal AI Assistant for extra practice, explanations, and learning support.</p>
+    </header>
+
+    <div class="chat-window" id="chatWindow">
+        {% for msg in conversation %}
+            {% if msg.role == "user" %}
+            <div class="chat-bubble user">{{ msg.content }}</div>
+            {% else %}
+            <div class="chat-bubble ai">{{ msg.content|safe }}</div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <form method="POST" id="chatForm">
+        {% csrf_token %}
+        <textarea name="prompt" id="prompt" placeholder="Ask me anything..."></textarea>
+    </form>
+
+    <!-- Navigation Footer -->
+    <div class="navigation-footer">
+        <a href="{% url 'student_dashboard' %}" class="nav-link"><i class="fas fa-home"></i><span>Home</span></a>
+        <a href="{% url 'course_selection_page' %}" class="nav-link">
+            <i class="fas fa-book"></i>
+            <span>Courses</span>
+        </a>
+        <a href="{% url 'upload_syllabus_page' %}" class="nav-link">
+            <i class="fas fa-file-upload"></i><span>Upload Syllabus</span>
+        </a>
+        <a href="#" class="nav-link"><i class="fas fa-cog"></i><span>Settings</span></a>
+    </div>
+</div>
+
+<script>
+  const chatWindow = document.getElementById('chatWindow');
+  if (chatWindow) {
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+  const form = document.getElementById('chatForm');
+  const textarea = document.getElementById('prompt');
+  textarea.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault(); 
+          form.submit(); 
+      }
+  });
+</script>
+</body>
+</html>

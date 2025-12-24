@@ -1,0 +1,123 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f7f9fc;
+    margin: 0;
+    padding: 0;
+}
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 30px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+header {
+    text-align: center;
+    border-bottom: 2px solid #2575fc;
+    padding-bottom: 15px;
+    margin-bottom: 25px;
+}
+header h1 {
+    color: #2575fc;
+}
+.result-summary {
+    text-align: center;
+    margin-bottom: 25px;
+}
+.result-summary h2 {
+    color: #333;
+}
+.highlight {
+    color: #2575fc;
+    font-weight: bold;
+}
+.analysis {
+    background: #f1f6ff;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+.question {
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+.correct {
+    color: green;
+    font-weight: bold;
+}
+.wrong {
+    color: red;
+    font-weight: bold;
+}
+.option {
+    margin-left: 20px;
+}
+.btn-row {
+    text-align: center;
+    margin-top: 20px;
+}
+.btn {
+    background: #2575fc;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: 0.3s;
+}
+.btn:hover {
+    background: #1c64e0;
+}
+
+.ai-feedback {
+    background-color: #f9f9f9;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    font-family: 'Poppins', sans-serif;
+}
+
+.ai-feedback h3 {
+    color: #1F2937;
+    font-size: 1.6rem;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #3B82F6;
+    padding-bottom: 5px;
+}
+
+.feedback-section {
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.feedback-section h4 {
+    margin-bottom: 8px;
+    font-size: 1.2rem;
+}
+
+.feedback-section p {
+    margin: 0;
+    color: #374151;
+    line-height: 1.5;
+    white-space: pre-wrap; /* preserves AI line breaks */
+}
+
+/* Specific colors for each section */
+.weak-areas {
+    background-color: #FEE2E2; /* light red */
+    border-left: 5px solid #EF4444; /* red */
+}
+
+.improvement {
+    background-color: #DBEAFE; /* light blue */
+    border-left: 5px solid #3B82F6; /* blue */
+}
+
+.prediction {
+    background-color: #D1FAE5; /* light green */
+    border-left: 5px solid #10B981; /* green */
+}

@@ -1,0 +1,186 @@
+{% load static %}
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overall Performance</title>
+  <link rel="stylesheet" href="{% static 'accounts/overall_performance.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Hi {{ request.user.username }}, Your Overall Performance</h1>
+        <p>Track your academic journey, review your performance, and discover where you can improve for even better results.</p>
+    </header>
+
+  <main class="dashboard-main">
+    <section class="student-summary">
+      <h2>Student Summary</h2>
+      <p><strong>Completed Quizzes:</strong> {{ completed_quizzes }}</p>
+      <p><strong>Performance Rate:</strong> {{ performance_rate }}%
+        <span class="status {% if performance_rate > 80 %}good{% elif performance_rate > 60 %}average{% else %}poor{% endif %}">
+          {% if performance_rate > 80 %}Excellent{% elif performance_rate > 60 %}Good{% else %}Needs Work{% endif %}
+        </span>
+      </p>
+      <p><strong>Improvement Rate:</strong> +{{ improvement_rate }}%</p>
+      <section class="ai-advice"> 
+        <h2>Performance Overview</h2> 
+        <pre class="ai-text">{{ ai_overall_feedback }}</pre> 
+      </section>
+    </section>
+
+    <section class="charts-container">
+      <div class="chart performance-chart">
+        <h3>Performance by Course</h3>
+        <canvas id="performanceBarChart" width="400" height="200"></canvas>
+      </div>
+
+      <section class="performance-gauge">
+        <h3>Projected Performance</h3>
+        <div class="gauge-container">
+            <div class="gauge">
+                <svg class="gauge-svg" viewBox="0 0 36 36">
+                    <path class="gauge-bg"
+                          d="M18 2.0845
+                             a 15.9155 15.9155 0 0 1 0 31.831
+                             a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                    <path class="gauge-fill" stroke-dasharray="{{ predicted_performance|default:"0" }}, 100"
+                          d="M18 2.0845
+                             a 15.9155 15.9155 0 0 1 0 31.831
+                             a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                </svg>
+                <div class="gauge-center">
+                    <span class="gauge-value">{{ predicted_performance|default:"0" }}%</span>
+                </div>
+            </div>
+            <p class="gauge-text">
+                You're on track to reach <strong>{{ predicted_performance|default:"0" }}%</strong>.
+            </p>
+        </div>
+      </section>
+
+      <div class="chart attendance-visual">
+        <h3>Monthly Quiz Attendance Trend</h3>
+        <p class="chart-note">
+          Weeks reset at the start of each month. A week is marked present if you attempted any quiz from Ai-Quiz during that time.
+        </p><canvas id="attendanceChart" height="120"></canvas>
+      </div>
+      
+    </section>
+  </main>
+
+  <div class="navigation-footer">
+    <a href="{% url 'student_dashboard' %}" class="nav-link"><i class="fas fa-home"></i><span>Home</span></a>
+    <a href="{% url 'course_selection_page' %}" class="nav-link"><i class="fas fa-book"></i><span>Courses</span></a>
+    <a href="{% url 'quiz_selection_page' %}" class="nav-link"><i class="fas fa-question-circle"></i><span>Quiz</span></a>
+    <a href="#" class="nav-link"><i class="fas fa-chart-bar"></i><span>Progress</span></a>
+    <a href="#" class="nav-link"><i class="fas fa-cog"></i><span>Settings</span></a>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  
+document.addEventListener("DOMContentLoaded", () => {
+    const coursesData = JSON.parse('{{ courses_json|escapejs }}');
+
+    if(!coursesData || coursesData.length === 0) return;
+
+    const courseLabels = coursesData.map(c => c.name);
+    const courseData = coursesData.map(c => c.performance || 0);
+    const colors = courseData.map(val => {
+        if(val < 60) return 'rgba(255, 99, 132, 0.7)';
+        else if(val < 80) return 'rgba(255, 206, 86, 0.7)';
+        else return 'rgba(75, 192, 192, 0.7)';
+    });
+
+    const borderColors = colors.map(c => c.replace('0.7','1'));
+    const ctx = document.getElementById('performanceBarChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: courseLabels,
+            datasets: [{
+                label: 'Performance (%)',
+                data: courseData,
+                backgroundColor: colors,
+                borderColor: borderColors,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) { return context.parsed.y + "%"; }
+                    }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, max: 100, title: { display: true, text: 'Performance (%)' } },
+                x: { title: { display: true, text: 'Courses' } }
+            }
+        }
+    });
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const attendanceData = JSON.parse('{{ attendance_json|escapejs }}');
+
+    const weeks = ["Week 1", "Week 2", "Week 3", "Week 4"];
+    const datasets = [];
+    const colors = ["#2563eb", "#16a34a", "#dc2626", "#f59e0b", "#7c3aed", "#0d9488"];
+    let index = 0;
+
+    for (const course in attendanceData) {
+        const data = weeks.map(w => attendanceData[course][w] || 0);
+        datasets.push({
+            label: course,
+            data: data,
+            backgroundColor: colors[index % colors.length]
+        });
+        index++;
+    }
+
+    const ctx = document.getElementById("attendanceChart").getContext("2d");
+    new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: weeks,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ": " + (context.raw === 1 ? "Present" : "Absent");
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { stacked: true, title: { display: true, text: "Weeks" } },
+                y: {
+                    stacked: true,
+                    beginAtZero: true,
+                    stepSize: 1,
+                    ticks: {
+                        callback: v => v === 1 ? "Present" : ""
+                    },
+                    title: { display: true, text: "Attendance" }
+                }
+            }
+        }
+    });
+});
+</script>
+</body>
+</html>

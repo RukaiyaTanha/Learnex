@@ -1,0 +1,27 @@
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+.charts-container {
+    display: block;
+}
+.progress-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 24px;
+}
+.course-progress-card {
+    margin-bottom: 0;
+}
+.course-progress-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+}
+.course-progress-card h3 {
+    color: #1b4ed7;
+    margin-bottom: 15px;
+}

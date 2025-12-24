@@ -1,0 +1,324 @@
+/* ===== Global ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: #f5f7fa;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    color: #333;
+}
+
+/* ===== Container ===== */
+.container {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 1300px;
+    padding: 25px 20px;
+    position: relative;
+}
+
+/* ===== Header ===== */
+header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+header h1 {
+    font-size: 26px;
+    color: #2575fc;
+    margin-bottom: 6px;
+}
+header p {
+    font-size: 14px;
+    color: #555;
+}
+/* ===== Selection Panel with inline Add button ===== */
+/* ===== Custom Select Styling ===== */
+.section select {
+    width: 30%;
+    margin-bottom: 30px;
+    margin-top: 15px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    appearance: none;
+    background: #fff url("data:image/svg+xml,%3Csvg fill='%23555' height='12' viewBox='0 0 24 24' width='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") no-repeat;
+    background-position: right 12px center;
+    background-size: 12px 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+
+.selection-panel {
+    margin-bottom: 25px;
+}
+.selection-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.selection-group h2 {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 0;
+    flex-basis: 100%;
+}
+.custom-select {
+    position: relative;
+    flex: 1;
+    min-width: 100px;
+}
+.custom-select select {
+    width: 50%;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    appearance: none;
+}
+.custom-select i {
+    position: absolute;
+    top: 50%;
+    right: 335px;
+    transform: translateY(-50%);
+    color: #555;
+}
+#add-course-btn {
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: none;
+    background: #2575fc;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+#add-course-btn:hover {
+    background: #1c64e0;
+}
+
+/* ===== Courses Grid ===== */
+.courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+    margin-bottom: 30px;
+}
+
+/* ===== Course Cards ===== */
+.quiz-option-card, .course-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid #eee;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+.quiz-option-card:hover, .course-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+}
+.quiz-option-card h3, .course-card h3 {
+    font-size: 16px;
+    color: #2575fc;
+    margin-bottom: 8px;
+}
+
+/* ===== Course Status & Lock Button ===== */
+.course-status {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+.course-status.unlocked { color: #2ecc71; }
+.course-status.locked { color: #e74c3c; }
+
+.toggle-lock-btn {
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    background: #2575fc;
+    color: white;
+    transition: all 0.3s ease;
+}
+.toggle-lock-btn:hover { background: #1c64e0; }
+
+/* ===== Save & Continue Button ===== */
+#save-courses-btn {
+    margin-top: 20px;
+    margin-bottom: 30px;
+    padding: 10px 20px;
+    font-size: 15px;
+    border-radius: 8px;
+    border: none;
+    background: #2575fc;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: block;
+}
+#save-courses-btn:hover { background: #1c64e0; transform: translateY(-1px); }
+
+/* ===== Remove Button on Course Cards ===== */
+.quiz-option-card .remove-btn {
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    background: #e74c3c;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.quiz-option-card .remove-btn:hover {
+    background: #c0392b;
+    transform: translateY(-1px);
+}
+
+/* ===== Footer Navigation ===== */
+.navigation-footer {
+    display: flex;
+    justify-content: space-around;
+    background: #f8f9fa;
+    padding: 15px 10px;
+    border-radius: 15px;
+}
+
+.navigation-footer .nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #555;
+    font-size: 13px;
+    transition: all 0.3s ease;
+}
+.navigation-footer .nav-link.active,
+.navigation-footer .nav-link:hover { color: #2575fc; }
+.navigation-footer i { font-size: 18px; margin-bottom: 4px; }
+
+/* ===== Marks Grid & Cards ===== */
+.marks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.marks-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid #eee;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.marks-card h3 {
+    color: #2575fc;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.marks-card input {
+    width: 80%;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+/* ===== Upload Button (modern style) ===== */
+.upload {
+    padding: 12px 25px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    background: #2575fc;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: block;
+    margin: 0 auto 30px auto;
+}
+
+.upload:hover {
+    background: #1c64e0;
+    transform: translateY(-1px);
+}
+/* ====== TOAST ====== */
+.toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1829a2;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 30px;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.4s, bottom 0.4s;
+    z-index: 999;
+}
+
+.toast.show {
+    opacity: 1;
+    bottom: 110px;
+}
+/* ===== Responsive ===== */
+@media(max-width:768px){
+    .marks-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+}
+
+@media(max-width:480px){
+    .marks-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ===== Responsive ===== */
+@media(max-width:768px){
+    .selection-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .custom-select { max-width: 100%; }
+    #add-course-btn { width: 100%; }
+    .courses-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+    .navigation-footer { flex-wrap: wrap; gap: 10px; }
+}
+
+@media(max-width:480px){
+    .container { padding: 20px 15px; }
+    .courses-grid { grid-template-columns: 1fr; }
+}

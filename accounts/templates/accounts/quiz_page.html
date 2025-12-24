@@ -1,0 +1,175 @@
+{% load static %} 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ course.name }} - {{ topic.name }} - {{ type|title }} Quiz</title>
+    <link rel="stylesheet" href="{% static 'accounts/quiz.css' %}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 90%;
+            max-width: 900px;
+            margin: 30px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        header {
+            text-align: center;
+            border-bottom: 2px solid #2575fc;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        header h1 {
+            color: #2575fc;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        header p {
+            margin: 3px 0;
+            color: #555;
+        }
+        #timer {
+            font-weight: bold;
+            color: #e63946;
+        }
+        .question {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background: #fdfdfd;
+        }
+        .question p {
+            margin: 0 0 10px;
+        }
+        .options label {
+            display: block;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+        textarea {
+            width: 100%;
+            height: 80px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            padding: 8px;
+            resize: vertical;
+            font-family: monospace;
+        }
+        .button-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .submit-btn, .cancel-btn {
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+        .submit-btn {
+            background: #2575fc;
+            color: white;
+        }
+        .submit-btn:hover {
+            background: #1c64e0;
+        }
+        .cancel-btn {
+            background: #ccc;
+            color: #222;
+        }
+        .cancel-btn:hover {
+            background: #b1b1b1;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>{{ course.name }} - {{ topic.name }} Quiz ({{ type|upper }})</h1>
+        <p><strong>Time Duration:</strong> {{ time_duration }}</p>
+        <p><strong>Total Marks:</strong> {{ marks }}</p>
+        <p id="timer">Time Left: --:--</p>
+    </header>
+
+    <form method="post" id="quizForm">
+        {% csrf_token %}
+        {% for q in questions %}
+            <div class="question">
+                <p><strong>Q{{ forloop.counter }}:</strong> {{ q.question }}</p>
+
+                {% if q.options %}
+                    <div class="options">
+                        {% for opt in q.options %}
+                            <label>
+                                <input type="radio" name="answer_{{ forloop.parentloop.counter }}" value="{{ opt }}">
+                                {{ opt }}
+                            </label>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <textarea name="answer_{{ forloop.counter }}" placeholder="Write your answer here..."></textarea>
+                {% endif %}
+            </div>
+        {% empty %}
+            <p>No questions available for this quiz.</p>
+        {% endfor %}
+
+        {% if questions %}
+        <div class="button-row">
+            <button type="button" class="cancel-btn" id="cancelBtn">Cancel Quiz</button>
+            <button type="submit" class="submit-btn">Submit Quiz</button>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<script>
+function parseDuration(duration) {
+    duration = duration.toLowerCase();
+    if (duration.includes('hour')) {
+        return parseInt(duration) * 60 * 60;
+    } else if (duration.includes('minute')) {
+        return parseInt(duration) * 60;
+    }
+    return 0;
+}
+const durationStr = "{{ time_duration }}";
+let timeLeft = parseDuration(durationStr);
+const timerDisplay = document.getElementById('timer');
+const form = document.getElementById('quizForm');
+
+function startTimer() {
+    const timer = setInterval(() => {
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            alert("Time’s up! Your quiz will be submitted automatically.");
+            form.submit();
+        } else {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerDisplay.textContent = `Time Left: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+            timeLeft--;
+        }
+    }, 1000);
+}
+startTimer();
+document.getElementById("cancelBtn").addEventListener("click", function() {
+    if (confirm("Are you sure you want to cancel this quiz? Your progress will not be saved.")) {
+        window.location.href = "{% url 'quiz_selection_page' %}";
+    }
+});
+</script>
+</body>
+</html>

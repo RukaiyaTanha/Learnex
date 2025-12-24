@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student – View Syllabus</title>
+    <link rel="stylesheet" href="{% static 'accounts/student_view_syllabus.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <header class="header">
+        <h1>Hi {{ username }}, View Syllabus</h1>
+        <p>View all syllabus files uploaded by your teachers.</p>
+    </header>
+
+    {% if syllabus %}
+    <div class="syllabus-grid">
+        {% for s in syllabus %}
+        <div class="syllabus-card">
+            <div class="card-head">
+                <h3>{{ s.course.name }}</h3>
+                <small>{{ s.uploaded_at|date:"M d, Y - h:i A" }}</small>
+            </div>
+
+            <p><strong>Semester:</strong> {{ s.semester }} | <strong>Section:</strong> {{ s.section }}</p>
+
+            {% if s.syllabus_file %}
+            <p class="file-info">
+                <strong>File:</strong> {{ s.syllabus_file.name|slice:"9:" }} 
+                <span class="file-type">({{ s.syllabus_file.name|slice:"-4:" }})</span>
+            </p>
+            <div class="card-actions">
+                <a href="{{ s.syllabus_file.url }}" download class="btn download">
+                    <i class="fas fa-download"></i> Download
+                </a>
+            </div>
+            {% else %}
+                <p class="muted">No file attached.</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+        <p class="no-syllabus">No syllabus uploaded yet.</p>
+    {% endif %}
+
+    <!-- Navigation Footer -->
+    <footer class="navigation-footer">
+        <a href="{% url 'student_dashboard' %}" class="nav-link">
+            <i class="fas fa-home"></i><span>Home</span>
+        </a>
+        <a href="#" class="nav-link">
+            <i class="fas fa-chart-line"></i><span>Performance</span>
+        </a>
+        <a href="#" class="nav-link">
+            <i class="fas fa-cog"></i><span>Settings</span>
+        </a>
+    </footer>
+</div>
+</body>
+</html>

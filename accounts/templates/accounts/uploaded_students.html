@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Uploaded Students</title>
+<link rel="stylesheet" href="{% static 'accounts/upload_student_info.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="container">
+<section class="section-student-panel">
+<header class="dashboard-header">
+  <h1>Hi {{ username }}, Uploaded Student Information</h1>
+  <p>All your uploaded students by semester, course, and section.</p>
+</header>
+
+{% if uploaded_data %}
+  {% for sem, courses in uploaded_data.items %}
+    <h2 class="semester-title">{{ sem }}</h2>
+    {% for course, sections in courses.items %}
+      <h3 class="course-title">{{ course }}</h3>
+      {% for sec_name, students in sections.items %}
+        <div class="section-card">
+          <h4>
+            Section {{ sec_name }}
+            <!-- Delete form/button -->
+            <form method="post" action="{% url 'delete_section' %}" style="display:inline;">
+              {% csrf_token %}
+              <input type="hidden" name="semester" value="{{ sem }}">
+              <input type="hidden" name="course" value="{{ course }}">
+              <input type="hidden" name="section" value="{{ sec_name }}">
+              <button type="submit" class="delete-btn"><i class="fas fa-trash"></i> Delete</button>
+            </form>
+          </h4>
+          <ul>
+            {% for student in students %}
+              <li>{{ student.student_name }} - {{ student.student_id }} - {{ student.email }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endfor %}
+    {% endfor %}
+  {% endfor %}
+{% else %}
+  <p>No uploaded student information yet.</p>
+{% endif %}
+
+<div class="navigation-footer">
+  <a href="{% url 'teacher_dashboard' %}" class="nav-link">
+    <i class="fas fa-home"></i><span>Home</span>
+  </a>
+  <a href="{% url 'upload_student_info_page' %}" class="nav-link">
+    <i class="fas fa-upload"></i><span>Upload</span>
+  </a>
+  <a href="{% url 'uploaded_students_page' %}" class="nav-link active">
+    <i class="fas fa-users"></i><span>Student Info</span>
+  </a>
+  <a href="#" class="nav-link">
+    <i class="fas fa-cog"></i><span>Settings</span>
+  </a>
+</div>
+</section>
+</div>
+</body>
+</html>

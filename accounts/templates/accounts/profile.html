@@ -1,0 +1,41 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ username }} | Profile</title>
+<link rel="stylesheet" href="{% static 'accounts/profile.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="container profile-container">
+    <div class="top-bar">
+        <h1>Profile</h1>
+    </div>
+
+    <div class="profile-card">
+        {% if user.profile_picture %}
+        <img src="{{ user.profile_picture.url }}" alt="Profile Picture" class="profile-pic">
+        {% else %}
+        <i class="fas fa-user-circle"></i>
+        {% endif %}
+        <div class="profile-details">
+            <p><strong>Name:</strong> {{ username }}</p>
+            <p><strong>First Name:</strong> {{ first_name }}</p>
+            <p><strong>Last Name:</strong> {{ last_name }}</p>
+            <p><strong>Email:</strong> {{ email }}</p>
+            <p><strong>Role:</strong> {{ role }}</p>
+            <p><strong>Joined:</strong> {{ date_joined|date:"F j, Y" }}</p>
+        </div>
+    </div>
+
+    <div class="navigation-footer">
+        <a href="{% url 'student_dashboard' %}" class="nav-link"><i class="fas fa-home"></i><span>Home</span></a>
+        <a href="#" class="nav-link active"><i class="fas fa-user"></i><span>Profile</span></a>
+        <a href="{% url 'profile_edit' %}" class="nav-link"><i class="fas fa-pen"></i><span>Edit</span></a>
+        <a href="#" class="nav-link"><i class="fas fa-cog"></i><span>Settings</span></a>
+    </div>
+</div>
+</body>
+</html>

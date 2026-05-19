@@ -1,0 +1,98 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher - Student Overall Performance</title>
+  <link rel="stylesheet" href="{% static 'accounts/teacher_view_performance.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="container">
+  <header class="header">
+      <h1>Hi {{ username }}, Student Performance Dashboard</h1>
+      <p>Monitor overall and course-wise performance of your students at a glance.</p>
+  </header>
+  <main class="dashboard-main">
+    {% if students_data %}
+      {% for s in students_data %}
+      <div class="student-card">
+        <section class="student-summary">
+          <h3>{{ s.name }}</h3>
+          <span class="email">{{ s.email }}</span>
+          <div class="metrics">
+            <div class="metric">
+              <span>Completed Quizzes</span>
+              <strong>{{ s.completed_quizzes|default:"0" }}</strong>
+            </div>
+            <div class="metric">
+              <span>Total Score</span>
+              <strong>{{ s.total|default:"0"|floatformat:2 }}%</strong>
+              <span class="status {% if s.total|default:0 > 80 %}good{% elif s.total|default:0 > 60 %}average{% else %}poor{% endif %}">
+                {% if s.total|default:0 > 80 %}Excellent{% elif s.total|default:0 > 60 %}Good{% else %}Needs Work{% endif %}
+              </span>
+            </div>
+            <div class="metric">
+              <span>Predicted</span>
+              <strong>{{ s.predicted|default:"0"|floatformat:2 }}%</strong>
+            </div>
+          </div>
+          <div class="progress-bar-background">
+            <div class="progress-bar-fill" style="--fill-width: {{ s.total|default:0 }}%;"></div>
+          </div>
+        </section>
+        {% if s.courses %}
+        <section class="course-performance-section">
+          <h4>Course-wise Performance</h4>
+          <table class="course-performance-table">
+            <thead>
+              <tr>
+                <th>Course</th>
+                <th>Performance</th>
+                <th>Progress</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for course in s.courses %}
+              <tr>
+                <td>{{ course.name }}</td>
+                <td>{{ course.performance }}%</td>
+                <td>
+                  <div class="progress-bar-background small-bar">
+                    <div class="progress-bar-fill" style="--fill-width: {{ course.performance|default:0 }}%;"></div>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </section>
+        {% endif %}
+
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="no-data">No student records found.</p>
+    {% endif %}
+  </main>
+
+  <!-- Navigation Footer -->
+  <footer class="navigation-footer">
+    <a href="{% url 'teacher_dashboard' %}" class="nav-link"><i class="fas fa-home"></i><span>Home</span></a>
+    <a href="{% url 'teacher_published_marks_page' %}" class="nav-link"><i class="fas fa-users"></i><span>Student Marks</span></a>
+    <a href="#" class="nav-link"><i class="fas fa-cog"></i><span>Settings</span></a>
+  </footer>
+</div>
+
+<script>
+  document.querySelectorAll('.progress-bar-fill').forEach(el => {
+      const percent = parseFloat(getComputedStyle(el).getPropertyValue('--fill-width')) || 0;
+      el.style.width = percent + '%';
+      if (percent < 60) el.style.background = 'linear-gradient(90deg, #f44336, #e57373)';
+      else if (percent < 80) el.style.background = 'linear-gradient(90deg, #ff9800, #ffb74d)';
+      else el.style.background = 'linear-gradient(90deg, #4caf50, #81c784)';
+  });
+</script>
+</body>
+</html>

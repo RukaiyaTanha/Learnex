@@ -1,0 +1,109 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Results - {{ topic.name }}</title>
+    <link rel="stylesheet" href="{% static 'accounts/quiz_result.css' %}">
+</head>
+<body>
+<div class="container">
+
+    <header>
+        <h1>{{ course.name }} - {{ topic.name }} Results</h1>
+    </header>
+
+    <div class="result-summary">
+        <h2>Total Score: <span class="highlight">{{ total_score }}</span></h2>
+        <p>Performance Rate: <span class="highlight">{{ performance_rate }}%</span></p>
+    </div>
+
+    {% if ai_feedback %}
+    <div class="ai-feedback">
+        <h3>AI Feedback</h3>
+
+        {% if ai_feedback.weak_areas %}
+        <div class="feedback-section weak-areas">
+            <h4>Weak Areas</h4>
+            <p>{{ ai_feedback.weak_areas|linebreaksbr|safe }}</p>
+        </div>
+        {% endif %}
+
+        {% if ai_feedback.improvement %}
+        <div class="feedback-section improvement">
+            <h4>Improvement Suggestions</h4>
+            <p>{{ ai_feedback.improvement|linebreaksbr|safe }}</p>
+        </div>
+        {% endif %}
+
+        {% if ai_feedback.prediction %}
+        <div class="feedback-section prediction">
+            <h4>Performance Prediction</h4>
+            <p>{{ ai_feedback.prediction|linebreaksbr|safe }}</p>
+        </div>
+        {% endif %}
+
+        {% if ai_feedback.resources %}
+        <div style="
+            background: linear-gradient(135deg, #e0f7fa 0%, #f1fcff 100%);
+            padding: 24px;
+            margin-top: 24px;
+            border-radius: 14px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            border: 1px solid #cde7f0;
+        ">
+            <h3 style="
+                color: #01579B;
+                margin-bottom: 15px;
+                font-size: 22px;
+                font-weight: 600;
+                border-left: 5px solid #0288D1;
+                padding-left: 10px;
+            ">
+                Learning Resources
+            </h3>
+
+            <div style="
+                font-size: 16px;
+                line-height: 1.6;
+                color: #004d60;
+            ">
+                {{ ai_feedback.resources|linebreaksbr|safe }}
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+    {% endif %}
+
+    <h3>Question Analysis:</h3>
+
+    {% for r in results %}
+    <div class="question">
+        <p><strong>Q{{ forloop.counter }}:</strong> {{ r.question }}</p>
+
+        <p>
+            Your answer:
+            {% if r.selected %}
+                <span class="{% if r.is_correct %}correct{% else %}wrong{% endif %}">
+                    {{ r.selected }}
+                </span>
+            {% else %}
+                <em>Not answered</em>
+            {% endif %}
+        </p>
+
+        <p>Correct answer: <span class="correct">{{ r.correct }}</span></p>
+    </div>
+    {% endfor %}
+
+    <div class="btn-row">
+        <a href="{% url 'quiz_selection_page' %}" class="btn">
+            Back to Quiz Selection
+        </a>
+    </div>
+
+</div>
+</body>
+</html>

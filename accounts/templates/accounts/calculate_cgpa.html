@@ -1,0 +1,92 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cumulative CGPA Calculator</title>
+  <link rel="stylesheet" href="{% static 'accounts/cgpa_calculator.css' %}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Hi {{ request.user.username }}, Calculate Your CGPA</h1>
+      <p>Enter your semester GPA and total credits to calculate your cumulative CGPA.</p>
+    </header>
+    <div id="semesters-container">
+    </div>
+
+    <button id="addSemesterBtn">Add Semester</button>
+    <button id="calculateBtn">Calculate CGPA</button>
+
+    <div class="result" id="result">
+    </div>
+
+    <!-- Navigation Footer -->
+  <div class="navigation-footer">
+    <a href="{% url 'student_dashboard' %}" class="nav-link"><i class="fas fa-home"></i><span>Home</span></a>
+    <a href="{% url 'current_semester_cg' %}" class="nav-link"><i class="fas fa-calculator"></i><span>Current Semester CG</span></a>
+    <a href="#" class="nav-link"><i class="fas fa-chart-bar"></i><span>Progress</span></a>
+    <a href="#" class="nav-link"><i class="fas fa-cog"></i><span>Settings</span></a>
+  </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const container = document.getElementById("semesters-container");
+      const addBtn = document.getElementById("addSemesterBtn");
+      const calcBtn = document.getElementById("calculateBtn");
+      const resultDiv = document.getElementById("result");
+
+      let semCount = 0;
+
+      function addSemesterRow() {
+        semCount++;
+        const div = document.createElement("div");
+        div.classList.add("semester-row");
+        div.innerHTML = `
+          <label>Semester ${semCount}:</label>
+          <input type="number" step="0.01" class="sem-gpa" placeholder="Semester GPA" min="0" />
+          <input type="number" step="0.1" class="sem-credits" placeholder="Total Credits" min="0"/>
+        `;
+        container.appendChild(div);
+      }
+
+      addBtn.addEventListener("click", () => {
+        addSemesterRow();
+      });
+
+      calcBtn.addEventListener("click", () => {
+  const rows = document.querySelectorAll(".semester-row");
+  if (rows.length === 0) {
+    alert("Please add at least one semester");
+    return;
+  }
+  let totalPoints = 0;
+  let totalCredits = 0;
+
+  rows.forEach(row => {
+    const gpaInput = row.querySelector(".sem-gpa");
+    const creditsInput = row.querySelector(".sem-credits");
+    const gpa = parseFloat(gpaInput.value);
+    const credits = parseFloat(creditsInput.value);
+    if (!isNaN(gpa) && !isNaN(credits)) {
+      totalPoints += gpa * credits;
+      totalCredits += credits;
+    }
+  });
+
+  const cgpa = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : "0.00";
+
+  resultDiv.innerHTML = `<div class="cgpa-result-card">
+      <p><strong>Total Credits:</strong> <span>${totalCredits}</span></p>
+      <p><strong>Cumulative CGPA:</strong> <span>${cgpa}</span></p>
+    </div>`;
+});
+      addSemesterRow();
+    });
+  </script>
+</body>
+</html>

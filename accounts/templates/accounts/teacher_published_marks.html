@@ -1,0 +1,104 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Published Marks</title>
+  <link rel="stylesheet" href="{% static 'accounts/published_marks.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="container">
+  <header class="dashboard-header">
+    <h1>Hi {{ username }}, Published Marks</h1>
+    <p>Filter by semester, course, and section to view marks you uploaded.</p>
+  </header>
+
+  <section class="section-student-panel">
+    <form method="get" class="filter-form">
+      <select name="semester" required>
+        <option value="" disabled {% if not selected_sem %}selected{% endif %}>Select Semester</option>
+        {% for sem in semesters %}
+          <option value="{{ sem }}" {% if selected_sem == sem %}selected{% endif %}>{{ sem }}</option>
+        {% endfor %}
+      </select>
+
+      <select name="course" required>
+        <option value="" disabled {% if not selected_course_id %}selected{% endif %}>Select Course</option>
+        {% for c in courses %}
+          <option value="{{ c.id }}" {% if selected_course_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+
+      <select name="section" required>
+        <option value="" disabled {% if not selected_section %}selected{% endif %}>Select Section</option>
+        {% for s in sections %}
+          <option value="{{ s }}" {% if selected_section == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit" class="submit-btn"><i class="fas fa-filter"></i> Filter</button>
+    </form>
+
+    {% if selected_sem and selected_course_id and selected_section %}
+      <p class="selected-info">
+        <strong>Showing marks for:</strong>
+        Semester: {{ selected_sem }},
+        Course: {{ selected_course_name }},
+        Section: {{ selected_section }}
+      </p>
+    {% endif %}
+
+    {% if marks %}
+      <div class="section-card table-container">
+        <table class="student-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Quiz1</th>
+              <th>Quiz2</th>
+              <th>Quiz3</th>
+              <th>Attendance</th>
+              <th>Assignment</th>
+              <th>Presentation</th>
+              <th>Term Exam</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for mark in marks %}
+            <tr>
+              <td>{{ mark.student.username }}</td>
+              <td>{{ mark.quiz1 }}</td>
+              <td>{{ mark.quiz2 }}</td>
+              <td>{{ mark.quiz3 }}</td>
+              <td>{{ mark.attendance }}</td>
+              <td>{{ mark.assignment }}</td>
+              <td>{{ mark.presentation }}</td>
+              <td>{{ mark.termexam }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="no-marks-msg">No marks uploaded yet for selected semester/course/section.</p>
+    {% endif %}
+  </section>
+
+  <div class="navigation-footer">
+      <a href="{% url 'teacher_dashboard' %}" class="nav-link">
+          <i class="fas fa-home"></i>
+          <span>Home</span>
+      </a>
+      <a href="{% url 'teacher_post_marks_page' %}" class="nav-link">
+          <i class="fas fa-upload"></i>
+          <span>Upload Marks</span>
+      </a>
+      <a href="#" class="nav-link">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+      </a>
+  </div>
+</div>
+</body>
+</html>

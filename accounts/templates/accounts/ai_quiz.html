@@ -1,0 +1,182 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Live Quiz</title>
+    <link rel="stylesheet" href="{% static 'accounts/ai_quiz.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<body>
+
+<div class="ai-quiz-container">
+    <header>
+        <h1>Hi {{ request.user.username }}, Ready to test more?</h1>
+        <p>Your personal AI Assistant for extra practice, explanations, and exercises.</p>
+    </header>
+
+    <div class="quiz-controls">
+        <div>
+            <label>Select Course</label>
+            <select id="course-select">
+                {% for course in courses %}
+                    <option value="{{ course.id }}">{{ course.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label>Select Topic (Filename)</label>
+            <select id="topic-select">
+                <option value="">All Topics</option>
+                {% for t in topics %}
+                    <option value="{{ t }}">{{ t }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="quiz-prompt">
+        <label>Quiz Instruction</label>
+        <textarea id="user-prompt" placeholder="Example: generate 20 MCQs from this topic"></textarea>
+    </div>
+
+    <form id="quiz-form" style="display:none;">
+        <div id="quiz-questions"></div>
+        <div class="quiz-submit-area">
+            <button type="submit" class="quiz-btn">Submit Quiz</button>
+        </div>
+    </form>
+
+    <div id="quiz-result" class="quiz-result" style="display:none;"></div>
+    <!-- ========== NAVIGATION FOOTER ========== -->
+    <div class="navigation-footer">
+        <a href="{% url 'student_dashboard' %}" class="nav-link">
+            <i class="fas fa-home"></i><span>Home</span>
+        </a>
+        <a href="{% url 'course_selection_page' %}" class="nav-link">
+            <i class="fas fa-book"></i><span>Courses</span>
+        </a>
+        <a href="#" class="nav-link active">
+            <i class="fas fa-question-circle"></i><span>Quiz</span>
+        </a>
+        <a href="#" class="nav-link">
+            <i class="fas fa-cog"></i><span>Settings</span>
+        </a>
+    </div>
+</div>
+
+<script>
+function generateQuiz() {
+    let course_id = $("#course-select").val();
+    let filename = $("#topic-select").val();
+    let instruction = $("#user-prompt").val().trim();
+
+    $("#quiz-result").hide();
+    $("#quiz-questions").html("<p>Generating quiz...</p>");
+    $("#quiz-form").show();
+
+    $.ajax({
+        url: "{% url 'generate_ai_quiz' %}",
+        method: "POST",
+        headers: {"X-CSRFToken": "{{ csrf_token }}"},
+        contentType: "application/json",
+        
+            data: JSON.stringify({
+            course_id: course_id,
+            topic_name: filename,
+            instruction: instruction
+        }),
+    
+        success: function (res) {
+            if (res.status !== "success") {
+                $("#quiz-questions").html(`<p>Error: ${res.message || "AI generation failed"}</p>`);
+                return;
+            }
+
+            let html = "";
+            res.questions.forEach(function (q, index) {
+                html += `<div class="question-card" data-index="${index}">
+                    <h3>Q${index+1}. ${q.question_text}</h3>`;
+                for (let key in q.options) {
+                    html += `<label class="option">
+                        <input type="radio" name="q${index}" value="${key}"> ${key}. ${q.options[key]}
+                    </label>`;
+                }
+                html += `<input type="hidden" class="correct-answer" value="${q.correct_answer}">
+                         <input type="hidden" class="marks" value="${q.marks}"></div>`;
+            });
+
+            $("#quiz-questions").html(html);
+        }
+    });
+}
+
+$("#generate-quiz").click(generateQuiz);
+
+$("#user-prompt").keydown(function(e) {
+    if (e.key === "Enter" && !e.shiftKey) { 
+        e.preventDefault(); 
+        generateQuiz();
+    }
+});
+
+$("#quiz-form").submit(function (e) {
+    e.preventDefault();
+
+    let course_id = $("#course-select").val();
+    let filename = $("#topic-select").val();
+    let questions = [];
+
+    $(".question-card").each(function () {
+        let q_text = $(this).find("h3").text();
+        let correct = $(this).find(".correct-answer").val();
+        let marks = parseFloat($(this).find(".marks").val());
+        let student_answer = $(this).find("input[type=radio]:checked").val() || "";
+
+        questions.push({
+            question_text: q_text,
+            correct_answer: correct,
+            student_answer: student_answer,
+            marks: marks
+        });
+    });
+
+    $.ajax({
+        url: "{% url 'submit_ai_quiz' %}",
+        method: "POST",
+        headers: {"X-CSRFToken": "{{ csrf_token }}"},
+        contentType: "application/json",
+        data: JSON.stringify({
+            course_id: course_id,
+            topic_name: filename,
+            questions: questions
+        }),
+        success: function(res) {
+    $("#quiz-form").hide();
+    $("#quiz-result").show();
+
+    let html = `<h3>Quiz Completed</h3>
+                <p>Your Score:</p>
+                <span class="score-badge">${res.total_marks} / ${res.max_marks}</span>
+                <div class="feedback-container">`;
+
+    res.detailed_feedback.forEach(function(fb, index) {
+        html += `<div class="feedback-card">
+                    <h4>Q${index+1}. ${fb.question_text}</h4>
+                    <p><strong>Your answer:</strong> ${fb.student_answer || 'No answer'}</p>
+                    <p><strong>Correct answer:</strong> ${fb.correct_answer}</p>
+                    <p><em>${fb.explanation}</em></p>
+                 </div>`;
+    });
+
+    html += `</div>`;
+    $("#quiz-result").html(html);
+}
+
+    });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Courses - Smart Class</title>
+  <link rel="stylesheet" href="{% static 'accounts/course-selected.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>{{ username }}’s Courses</h1>
+    <p>Here are your selected courses and their statuses.</p>
+  </header>
+
+  <div class="courses-grid">
+    {% for uc in user_courses %}
+    <div class="quiz-option-card">
+      <h3>{{ uc.course.name }}</h3>
+      <div class="course-status unlocked">
+        <i class="fas fa-check"></i> Unlocked
+      </div>
+
+    </div>
+    {% empty %}
+    <p>No courses selected yet.</p>
+    {% endfor %}
+  </div>
+
+  <div class="navigation-footer">
+      <a href="{% url 'student_dashboard' %}" class="nav-link">
+          <i class="fas fa-home"></i>
+          <span>Home</span>
+      </a>
+      <a href="{% url 'course_selection_page' %}" class="nav-link">
+          <i class="fas fa-book"></i>
+          <span>Courses</span>
+      </a>
+      <a href="{% url 'selected_courses_page' %}" class="nav-link active">
+            <i class="fas fa-bookmark"></i>
+            <span>Selected Courses</span>
+      </a>
+      <a href="{% url 'quiz_selection_page' %}" class="nav-link">
+            <i class="fas fa-question-circle"></i>
+            <span>Quiz</span>
+        </a>
+      <a href="#" class="nav-link">
+          <i class="fas fa-cog"></i>
+          <span>Settings</span>
+      </a>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,136 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Marks - Smart Class</title>
+    <link rel="stylesheet" href="{% static 'accounts/upload_marks.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">   
+
+    <style>
+    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #27ae60;
+        color: #fff;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.5s ease;
+        z-index: 9999;
+    }
+    .toast.show {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Hi {{ username }}, Upload Class Marks</h1>
+        <p>Fill in the marks for each category below</p>
+    </header>
+
+    <div class="content-section">
+        <div class="section">
+            <h3>Select Course</h3>
+            <select id="course-select">
+                <option value="" selected disabled>Select a course</option>
+                {% for course in courses %}
+                    <option value="{{ course.id }}">{{ course.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="marks-grid">
+            <div class="marks-card"><h3>Quiz 01</h3><input type="number" id="quiz1" placeholder="Enter marks" min="0"></div>
+            <div class="marks-card"><h3>Quiz 02</h3><input type="number" id="quiz2" placeholder="Enter marks" min="0"></div>
+            <div class="marks-card"><h3>Quiz 03</h3><input type="number" id="quiz3" placeholder="Enter marks" min="0"></div>
+            <div class="marks-card"><h3>Attendance</h3><input type="number" id="attendance" placeholder="Enter marks" min="0"></div>
+            <div class="marks-card"><h3>Assignment</h3><input type="number" id="assignment" placeholder="Enter marks" min="0"></div>
+            <div class="marks-card"><h3>Presentation</h3><input type="number" id="presentation" placeholder="Enter marks" min="0"></div>
+            <div class="marks-card"><h3>Term Exam</h3><input type="number" id="termexam" placeholder="Enter marks" min="0"></div>
+        </div>
+
+        <button class="upload" id="upload-marks-btn">Upload</button>
+    </div>
+
+    <div class="navigation-footer">
+        <a href="{% url 'student_dashboard' %}" class="nav-link">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="{% url 'upload_marks_page' %}" class="nav-link active">
+            <i class="fas fa-upload"></i>
+            <span>Upload</span>
+        </a>
+        <a href="{% url 'edit_marks_page' %}" class="nav-link">
+            <i class="fas fa-edit"></i>
+            <span>Edit Marks</span>
+        </a>
+        <a href="#" class="nav-link">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+        </a>
+    </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+function showToast(message, success=true) {
+    const toast = document.getElementById('toast');
+    toast.innerText = message;
+    toast.style.background = success ? "#27ae60" : "#e74c3c";
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+document.getElementById('upload-marks-btn').addEventListener('click', async () => {
+    const courseId = document.getElementById('course-select').value;
+    if (!courseId) {
+        showToast("⚠️ Please select a course!", false);
+        return;
+    }
+
+    const data = {
+        course_id: courseId,
+        quiz1: document.getElementById('quiz1').value,
+        quiz2: document.getElementById('quiz2').value,
+        quiz3: document.getElementById('quiz3').value,
+        attendance: document.getElementById('attendance').value,
+        assignment: document.getElementById('assignment').value,
+        presentation: document.getElementById('presentation').value,
+        termexam: document.getElementById('termexam').value,
+    };
+
+    try {
+        const response = await fetch("{% url 'upload_marks_api' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify(data),
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            showToast("Marks saved to database!");
+            document.querySelectorAll('.marks-card input').forEach(input => input.value = '');
+        } else {
+            showToast("Failed to save marks", false);
+        }
+    } catch (error) {
+        console.error(error);
+        showToast("⚠️ Server error", false);
+    }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,156 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: #f0f2f5;
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    color: #333;
+}
+
+.container {
+    width: 100%;
+    max-width: 1400px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 12px 25px rgba(0,0,0,0.08);
+}
+
+/* Header */
+header.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+header.header h1 {
+    color: #2575fc;
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+header.header p {
+    color: #555;
+    font-size: 15px;
+}
+
+/* Dashboard Main */
+.dashboard-main {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 25px;
+}
+
+/* Student Card */
+.student-card {
+    background: #fefefe;
+    border-radius: 14px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    padding: 25px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.student-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+/* Student Summary */
+.student-summary h3 {
+    font-size: 22px;
+    margin-bottom: 3px;
+}
+.student-summary .email {
+    display: block;
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 15px;
+}
+.student-summary .metrics {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 15px;
+}
+.student-summary .metric span {
+    font-size: 13px;
+    color: #555;
+}
+.student-summary .metric strong {
+    display: block;
+    font-size: 18px;
+    margin-top: 3px;
+}
+.student-summary .status {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #fff;
+    margin-left: 8px;
+}
+.student-summary .status.good { background-color: #4caf50; }
+.student-summary .status.average { background-color: #ff9800; }
+.student-summary .status.poor { background-color: #f44336; }
+
+/* Progress Bars */
+.progress-bar-background {
+    width: 100%;
+    height: 20px;
+    background: #eee;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+.progress-bar-fill {
+    height: 100%;
+    width: 0;
+    border-radius: 12px 0 0 12px;
+    transition: width 1s ease-in-out;
+}
+
+/* Course Performance Table */
+.course-performance-section h4 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    color: #2575fc;
+    font-size: 18px;
+}
+.course-performance-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.course-performance-table th,
+.course-performance-table td {
+    text-align: left;
+    padding: 12px 10px;
+    font-size: 14px;
+    border-bottom: 1px solid #eee;
+}
+.course-performance-table th { color: #555; }
+.course-performance-table td .progress-bar-background { height: 15px; }
+
+/* Navigation Footer */
+.navigation-footer {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 30px;
+    padding: 15px 0;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+.nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 13px;
+    color: #666;
+    text-decoration: none;
+}
+.nav-link i {
+    font-size: 18px;
+    margin-bottom: 4px;
+}
+.nav-link:hover { color: #2575fc; }

@@ -1,0 +1,91 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Class Performance Tracker - Login</title>
+    <link rel="stylesheet" href="{% static 'accounts/login1.css' %}">
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Smart Class Performance Tracker</h1>
+        <h2><strong>Login</strong></h2>
+    </header>
+
+    <div class="user-type">
+        <div class="option student-option selected">
+            <span>Student</span>
+        </div>
+        <div class="option teacher-option">
+            <span>Teacher</span>
+        </div>
+    </div>
+
+    <form class="login-form">
+        <div class="form-group">
+            <input type="email" id="email" placeholder="Enter your email address" required>
+        </div>
+
+        <div class="form-group">
+            <input type="password" id="password" placeholder="Enter the password" required>
+        </div>
+
+        <div class="form-buttons">
+            <button type="submit" class="login-btn">Login</button>
+        </div>
+    </form>
+
+    <div class="links">
+        <a href="{% url 'forgot_password_page' %}" class="forgot-link">Forgot Password?</a>
+        <a href="{% url 'registration_page' %}" class="create-link">Create new account</a>
+    </div>
+</div>
+
+<script>
+let selectedRole = "student"; 
+document.querySelector(".student-option").addEventListener("click", () => {
+    selectedRole = "student";
+    document.querySelector(".student-option").classList.add("selected");
+    document.querySelector(".teacher-option").classList.remove("selected");
+});
+document.querySelector(".teacher-option").addEventListener("click", () => {
+    selectedRole = "teacher";
+    document.querySelector(".teacher-option").classList.add("selected");
+    document.querySelector(".student-option").classList.remove("selected");
+});
+document.querySelector(".login-form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if (!email || !password) {
+        alert("Please fill all fields.");
+        return;
+    }
+
+    try {
+        const response = await fetch("{% url 'login_api' %}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password, role: selectedRole })
+        });
+
+        const data = await response.json();
+
+    if (data.success) {
+    alert("Login successful! Welcome " + data.username + " (" + data.role + ")");
+    window.location.href = data.redirect_url;  
+    } else {
+    alert("❌ " + data.message);
+    }
+    } catch (err) {
+        console.error(err);
+        alert("Server error. Try again later.");
+    }
+});
+</script>
+</body>
+</html>

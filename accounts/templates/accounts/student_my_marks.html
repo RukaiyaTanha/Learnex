@@ -1,0 +1,55 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>My Marks</title>
+  <link rel="stylesheet" href="{% static 'accounts/upload_student_info.css' %}">
+</head>
+<body>
+<div class="container">
+  <section class="section-student-panel">
+    <header class="dashboard-header">
+      <h1>Hi {{ username }}, Your Published Marks</h1>
+      <p>Only marks that have been published by your teachers are shown here.</p>
+    </header>
+
+    {% if marks %}
+      <div class="section-card">
+        <h4>Marks</h4>
+        <table class="student-table">
+          <thead>
+            <tr>
+              <th>Course</th>
+              <th>Quiz1</th>
+              <th>Quiz2</th>
+              <th>Quiz3</th>
+              <th>Attendance</th>
+              <th>Assignment</th>
+              <th>Presentation</th>
+              <th>Term Exam</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in marks %}
+            <tr>
+              <td>{{ m.course.name }}</td>
+              <td>{{ m.quiz1 }}</td>
+              <td>{{ m.quiz2 }}</td>
+              <td>{{ m.quiz3 }}</td>
+              <td>{{ m.attendance }}</td>
+              <td>{{ m.assignment }}</td>
+              <td>{{ m.presentation }}</td>
+              <td>{{ m.termexam }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p>No published marks available yet.</p>
+    {% endif %}
+  </section>
+</div>
+</body>
+</html>

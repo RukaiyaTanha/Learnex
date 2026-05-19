@@ -1,0 +1,217 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    background: #fff;
+    width: 1300px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    position: relative;
+}
+
+/* ===== Header ===== */
+header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+header h1 {
+    font-size: 26px;
+    color: #2575fc;
+    margin-bottom: 6px;
+}
+header p {
+    font-size: 14px;
+    color: #555;
+}
+
+/* ===== Form ===== */
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+textarea {
+    width: 100%;
+    height: 120px;
+    resize: none;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+    margin-bottom: 15px;
+    transition: border 0.3s, box-shadow 0.3s;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: #2575fc;
+    box-shadow: 0 0 5px rgba(37, 117, 252, 0.5);
+}
+
+button {
+    background: #2575fc;
+    width: 10%;
+    color: white;
+    font-size: 16px;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+}
+
+button:hover {
+    background: #1c64e0;
+    transform: translateY(-2px);
+}
+
+/* ===== Chat Window ===== */
+.chat-window {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+}
+
+/* ===== Chat Bubbles ===== */
+.chat-bubble {
+    max-width: 75%;
+    padding: 12px 16px;
+    border-radius: 15px;
+    line-height: 1.5;
+    font-size: 15px;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+}
+
+.chat-bubble.user {
+    align-self: flex-end;
+    background: #2575fc;
+    color: white;
+    border-bottom-right-radius: 0;
+}
+
+.chat-bubble.ai {
+    align-self: flex-start;
+    background: #f0f8ff;
+    color: #333;
+    border-bottom-left-radius: 0;
+}
+
+/* ===== Headings & Lists inside AI bubble ===== */
+.chat-bubble.ai h1, .chat-bubble.ai h2, .chat-bubble.ai h3,
+.chat-bubble.ai h4, .chat-bubble.ai h5, .chat-bubble.ai h6 {
+    color: #2575fc;
+    margin-top: 12px;
+    margin-bottom: 8px;
+}
+
+.chat-bubble.ai ul, .chat-bubble.ai ol {
+    padding-left: 20px;
+    margin-bottom: 10px;
+}
+
+/* ===== MODERN CODE BOX (inside AI bubble) ===== */
+.chat-bubble.ai pre {
+    background: #0f172a; /* Dark blue-gray background */
+    color: #e2e8f0; /* Soft white text */
+    padding: 16px;
+    border-radius: 12px;
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin: 14px 0;
+    border-left: 4px solid #3b82f6; /* blue accent bar */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Add subtle label above code */
+.chat-bubble.ai pre::before {
+    content: "💻 Code Snippet";
+    position: absolute;
+    top: 8px;
+    left: 12px;
+    font-size: 12px;
+    color: #93c5fd;
+    opacity: 0.8;
+}
+
+/* Inline code (short ones) */
+.chat-bubble.ai code {
+    background: #e2e8f0;
+    color: #1e3a8a;
+    padding: 3px 6px;
+    border-radius: 6px;
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+}
+
+/* ===== Scrollbars ===== */
+.chat-window::-webkit-scrollbar,
+.response::-webkit-scrollbar {
+    width: 6px;
+}
+.chat-window::-webkit-scrollbar-thumb,
+.response::-webkit-scrollbar-thumb {
+    background-color: #2575fc;
+    border-radius: 3px;
+}
+
+/* ===== Footer Navigation ===== */
+.navigation-footer {
+    position: fixed;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 40px);
+    max-width: 1300px;
+
+    display: flex;
+    justify-content: space-around;
+    background: #f8f9fa;
+    padding: 12px 8px;
+    border-radius: 15px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    z-index: 1000;
+}
+
+.navigation-footer .nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #555;
+    font-size: 13px;
+    transition: all 0.3s ease;
+}
+
+.navigation-footer .nav-link i {
+    font-size: 20px;
+    margin-bottom: 4px;
+}
+
+.navigation-footer .nav-link.active,
+.navigation-footer .nav-link:hover {
+    color: #2575fc;
+}

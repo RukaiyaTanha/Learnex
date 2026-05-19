@@ -1,0 +1,274 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Selection - Smart Class</title>
+    <link rel="stylesheet" href="{% static 'accounts/quiz-selection6.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .assessment-cards-wrapper {
+            display: none; 
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .assessment-cards-wrapper h2 {
+            color: #534e4e;
+            margin-bottom: 25px;
+            font-size: 20px;
+            margin-right: 1050px;
+        }
+
+        .assessment-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            justify-items: center;
+        }
+
+        .assessment-cards .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid #eee;
+            width: 100%;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .assessment-cards .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .assessment-cards .card.selected {
+            border: 2px solid #2575fc;
+            background: #f0f7ff;
+            box-shadow: 0 6px 18px rgba(37, 117, 252, 0.2);
+            transform: scale(1.03);
+        }
+
+        .assessment-cards .card h3 {
+            color: #2575fc;
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+
+        .assessment-cards .card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .assessment-cards .card li {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .next-btn-wrapper {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .start-btn {
+            background: #2575fc;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            width: 20%;
+        }
+
+        .start-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .start-btn:hover:not(:disabled) {
+            background: #1c64e0;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Hi {{ username }}, Let's start the assessment</h1>
+        <p>Select your course and topic to begin your quiz</p>
+    </header>
+    <div class="content-section">
+        <div class="selection-panel">
+            <div class="selection-group">
+                <h2>Choose a course</h2>
+                <div class="custom-select">
+                    <select id="course-select">
+                        <option value="" selected disabled>Select a course</option>
+                        {% for course in courses %}
+                            <option value="{{ course.id }}">{{ course.name }}</option>
+                        {% empty %}
+                            <option disabled>You are not enrolled in any courses</option>
+                        {% endfor %}
+                    </select>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+
+            <div class="selection-group">
+                <h2>Choose a topic</h2>
+                <div class="custom-select">
+                    <select id="topic-select">
+                        <option value="" selected disabled>Select a topic</option>
+                    </select>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="assessment-cards-wrapper" id="assessment-section">
+        <h2>Choose a type</h2>  
+        <div class="assessment-cards">         
+            <div class="card" data-type="mcq">
+                <h3>MCQ</h3>
+                <ul>
+                    <li>20 Questions</li>
+                    <li>Time Duration: 15 Minutes</li>
+                    <li>Marks: 20 (1 x 20)</li>
+                </ul>
+            </div>
+
+            <div class="card" data-type="scenario-mcq">
+                <h3>Scenario Based MCQ</h3>
+                <ul>
+                    <li>20 Questions</li>
+                    <li>Time Duration: 15 Minutes</li>
+                    <li>Marks: 20 (1 x 20)</li>
+                </ul>
+            </div>
+
+            <div class="card" data-type="code">
+                <h3>Code</h3>
+                <ul>
+                    <li>2 Code Writing</li>
+                    <li>3 Output Tracing</li>
+                    <li>Time Duration: 1 Hour</li>
+                    <li>Marks: 35 (2 x 10 + 3 x 5)</li>
+                </ul>
+            </div>
+
+            <div class="card" data-type="theory">
+                <h3>Theoretical</h3>
+                <ul>
+                    <li>5 Short Questions</li>
+                    <li>2 Broad Questions</li>
+                    <li>Time Duration: 1 Hour</li>
+                    <li>Marks: 30 (5 x 2 + 2 x 10)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="next-btn-wrapper">
+            <button id="next-btn" class="start-btn" disabled>Next</button>
+        </div>
+    </div>
+
+    <!-- ========== NAVIGATION FOOTER ========== -->
+    <div class="navigation-footer">
+        <a href="{% url 'student_dashboard' %}" class="nav-link">
+            <i class="fas fa-home"></i><span>Home</span>
+        </a>
+        <a href="{% url 'course_selection_page' %}" class="nav-link">
+            <i class="fas fa-book"></i><span>Courses</span>
+        </a>
+        <a href="#" class="nav-link active">
+            <i class="fas fa-question-circle"></i><span>Quiz</span>
+        </a>
+        <a href="#" class="nav-link">
+            <i class="fas fa-cog"></i><span>Settings</span>
+        </a>
+    </div>
+</div>
+
+{{ course_topics|json_script:"course-topics" }}
+
+<script>
+    let courseTopics;
+    try {
+        courseTopics = JSON.parse(document.getElementById('course-topics').textContent);
+    } catch (e) {
+        console.error("Failed to parse courseTopics JSON:", e);
+        courseTopics = {};
+    }
+
+    const courseSelect = document.getElementById('course-select');
+    const topicSelect = document.getElementById('topic-select');
+    const assessmentSection = document.getElementById('assessment-section');
+    const typeCards = document.querySelectorAll(".assessment-cards .card");
+    const nextBtn = document.getElementById("next-btn");
+
+    let selectedType = null;
+    courseSelect.addEventListener('change', function() {
+        const selectedCourseId = this.value;
+        topicSelect.innerHTML = '<option value="" selected disabled>Select a topic</option>';
+
+        let topics = courseTopics[selectedCourseId] || courseTopics[parseInt(selectedCourseId)];
+        if (topics && Array.isArray(topics)) {
+            topics.forEach(topic => {
+                const option = document.createElement('option');
+                option.value = topic.id;
+                option.textContent = topic.name;
+                topicSelect.appendChild(option);
+            });
+        }
+
+        hideAssessment();
+    });
+    topicSelect.addEventListener('change', function() {
+        if (this.value) {
+            assessmentSection.style.display = "block";
+        } else {
+            hideAssessment();
+        }
+    });
+
+    typeCards.forEach(card => {
+        card.addEventListener("click", () => {
+            typeCards.forEach(c => c.classList.remove("selected"));
+            card.classList.add("selected");
+            selectedType = card.dataset.type;
+            checkIfReady();
+        });
+    });
+
+    function hideAssessment() {
+        assessmentSection.style.display = "none";
+        selectedType = null;
+        nextBtn.disabled = true;
+        typeCards.forEach(c => c.classList.remove("selected"));
+    }
+
+    function checkIfReady() {
+        const course = courseSelect.value;
+        const topic = topicSelect.value;
+        if (course && topic && selectedType) {
+            nextBtn.disabled = false;
+        } else {
+            nextBtn.disabled = true;
+        }
+    }
+
+    nextBtn.addEventListener("click", () => {
+        const courseId = courseSelect.value;
+        const topicId = topicSelect.value;
+        const url = `/accounts/quiz/start/${courseId}/${topicId}/${selectedType}/`;
+        window.location.href = url;
+    });
+</script>
+</body>
+</html>

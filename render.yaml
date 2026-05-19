@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: learnex-web
+    env: python
+    plan: starter
+    buildCommand: "pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput"
+    startCommand: "gunicorn core.wsgi --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        fromDatabase: false
+      - key: DB_ENGINE
+        fromDatabase: false
+      - key: POSTGRES_DB
+        fromDatabase: false
+      - key: POSTGRES_USER
+        fromDatabase: false
+      - key: POSTGRES_PASSWORD
+        fromDatabase: false
+      - key: POSTGRES_HOST
+        fromDatabase: false
+      - key: POSTGRES_PORT
+        fromDatabase: false

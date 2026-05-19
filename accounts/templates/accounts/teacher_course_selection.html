@@ -1,0 +1,142 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Teacher Course Selection</title>
+<link rel="stylesheet" href="{% static 'accounts/teacher_course_selection.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Hi {{ username }}, Select Your Courses</h1>
+    <p>Choose a semester and add the courses you’ll teach.</p>
+  </header>
+  <div class="content-section">
+    <div class="selection-panel">
+      <div class="selection-group">
+        <div class="form-group">
+          <h3>Select Semester</h3>
+          <select id="semester-select">
+            <option value="" disabled selected>Select Semester</option>
+            <option value="Spring">Spring</option>
+            <option value="Summer">Summer</option>
+            <option value="Fall">Fall</option>
+            <option value="Spring24-25">Spring 24-25</option>
+            <option value="Summer24-25">Summer 24-25</option>
+            <option value="Fall24-25">Fall 24-25</option>
+            <option value="Spring25-26">Spring 25-26</option>
+            <option value="Summer25-26">Summer 25-26</option>
+            <option value="Fall25-26">Fall 25-26</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <h3>Select Course</h3>
+          <select id="course-select">
+            <option value="" selected disabled>Select a course</option>
+            {% for course in courses %}
+              <option value="{{ course.code }}">{{ course.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button id="add-course-btn" class="start-btn">Add Course</button>
+      </div>
+    </div>
+    <div class="courses-grid" id="coursesGrid"></div>
+    <button id="save-courses-btn" class="start-btn">Save & Continue</button>
+  </div>
+
+  <!-- Footer Navigation -->
+  <div class="navigation-footer">
+    <a href="{% url 'teacher_dashboard' %}" class="nav-link">
+      <i class="fas fa-home"></i><span>Home</span>
+    </a>
+    <a href="{% url 'teacher_course_selection_page' %}" class="nav-link active">
+      <i class="fas fa-book"></i><span>Courses</span>
+    </a>
+    <a href="{% url 'teacher_selected_courses_page' %}" class="nav-link">
+      <i class="fas fa-bookmark"></i><span>My Courses</span>
+    </a>
+    <a href="#" class="nav-link">
+      <i class="fas fa-cog"></i><span>Settings</span>
+    </a>
+  </div>
+</div>
+
+<script>
+const semesterSelect = document.getElementById('semester-select');
+const courseSelect = document.getElementById('course-select');
+const addBtn = document.getElementById('add-course-btn');
+const saveBtn = document.getElementById('save-courses-btn');
+const coursesGrid = document.getElementById('coursesGrid');
+
+let semesterCourses = JSON.parse('{{ semester_courses_json|escapejs }}');
+let selectedSemester = "";
+let selectedCourses = new Set();
+
+function renderCourses() {
+  coursesGrid.innerHTML = "";
+  selectedCourses.forEach(code => {
+    const option = courseSelect.querySelector(`option[value="${code}"]`);
+    const name = option ? option.text : code;
+    const card = document.createElement('div');
+    card.className = 'quiz-option-card';
+    card.id = code;
+    card.innerHTML = `
+      <h3>${name}</h3>
+      <div class="course-status unlocked"><i class="fas fa-check"></i> Added</div>
+      <button type="button" class="start-btn remove-btn">Remove</button>
+    `;
+    card.querySelector('.remove-btn').addEventListener('click', () => {
+      selectedCourses.delete(code);
+      renderCourses();
+    });
+    coursesGrid.appendChild(card);
+  });
+}
+
+semesterSelect.addEventListener('change', () => {
+  selectedSemester = semesterSelect.value;
+  selectedCourses = new Set(semesterCourses[selectedSemester] || []);
+  renderCourses();
+});
+
+addBtn.addEventListener('click', () => {
+  if (!selectedSemester) return alert("Select a semester first!");
+  const code = courseSelect.value;
+  if (!code) return alert("Select a course!");
+  if (selectedCourses.has(code)) return alert("Already added!");
+  selectedCourses.add(code);
+  renderCourses();
+});
+saveBtn.addEventListener('click', async () => {
+  if (!selectedSemester) return alert("Select a semester first!");
+  if (!selectedCourses.size) return alert("Add at least one course!");
+
+  try {
+    const response = await fetch("{% url 'save_teacher_courses_api' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": "{{ csrf_token }}"
+      },
+      body: JSON.stringify({
+        semester: selectedSemester,
+        courses: Array.from(selectedCourses)
+      })
+    });
+    const data = await response.json();
+    if (data.success) {
+      semesterCourses[selectedSemester] = Array.from(selectedCourses);
+      alert(data.message);
+      window.location.href = "{% url 'teacher_selected_courses_page' %}";
+    } else alert(data.message);
+  } catch (e) {
+    console.error(e);
+    alert("Server error!");
+  }
+});
+</script>
+</body>
+</html>

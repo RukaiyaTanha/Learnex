@@ -1,19 +1,15 @@
+{% extends "accounts/auth_base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Class Performance Tracker - Login</title>
-    <link rel="stylesheet" href="{% static 'accounts/login1.css' %}">
-</head>
-<body>
-<div class="container">
-    <header>
-        <h1>Smart Class Performance Tracker</h1>
-        <h2><strong>Login</strong></h2>
-    </header>
 
+{% block title %}Smart Class Performance Tracker - Login{% endblock %}
+
+{% block content %}
+<header>
+    <h2><strong>Login</strong></h2>
+    <p>Sign in to continue to your dashboard and learning tools.</p>
+</header>
+
+<div class="container">
     <div class="user-type">
         <div class="option student-option selected">
             <span>Student</span>
@@ -87,5 +83,4 @@ document.querySelector(".login-form").addEventListener("submit", async function(
     }
 });
 </script>
-</body>
-</html>
+{% endblock %}

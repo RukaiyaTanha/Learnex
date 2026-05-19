@@ -19,6 +19,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 import mimetypes
 from django.db.models import F, Avg
+from django.db import IntegrityError
 import csv, io, json
 import os
 import pdfplumber
@@ -46,7 +47,11 @@ User = get_user_model()
 @csrf_exempt
 def register(request):
     if request.method == "POST":
-        data = json.loads(request.body)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"success": False, "message": "Invalid JSON payload"}, status=400)
+
         email = data.get('email')
         password = data.get('password')
         role = data.get('role')
@@ -60,15 +65,21 @@ def register(request):
         if User.objects.filter(email=email).exists():
             return JsonResponse({"success": False, "message": "Email already registered"})
 
-        user = User.objects.create_user(
-            username=username,
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            password=password,
-            role=role
-        )
-        return JsonResponse({"success": True, "message": "User registered successfully"})
+        if User.objects.filter(username=username).exists():
+            return JsonResponse({"success": False, "message": "Username already taken"})
+
+        try:
+            User.objects.create_user(
+                username=username,
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                password=password,
+                role=role
+            )
+            return JsonResponse({"success": True, "message": "User registered successfully"})
+        except IntegrityError:
+            return JsonResponse({"success": False, "message": "Username or email already exists"}, status=400)
 
     return JsonResponse({"success": False, "message": "Invalid request"})
 

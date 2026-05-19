@@ -14,8 +14,10 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-#a%2062@#6dv0mre7sb
 
 DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
-# Allow hosts configurable via `ALLOWED_HOSTS` env var (comma-separated)
-ALLOWED_HOSTS = [h for h in os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',') if h]
+# Allow hosts configurable via `ALLOWED_HOSTS` env var (comma-separated).
+# Default includes Render's `onrender.com` subdomains so the app works there
+# even if the environment variable is not set yet.
+ALLOWED_HOSTS = [h for h in os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost,.onrender.com').split(',') if h]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -150,7 +152,7 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 

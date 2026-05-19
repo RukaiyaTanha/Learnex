@@ -1,0 +1,204 @@
+body {
+  font-family: 'Inter', sans-serif;
+  background: #f5f7fa;
+  margin: 0;
+  padding: 0;
+}
+
+/* ===== Container ===== */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 30px auto;
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* ===== Header ===== */
+.dashboard-header {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.dashboard-header h1 {
+  color: #1b4ed7;
+  font-size: 24px;
+  margin-bottom: 5px;
+}
+
+.dashboard-header p {
+  font-size: 14px;
+  color: #555;
+}
+
+/* ===== Filter Form ===== */
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+.filter-form select {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background-color: #fff;
+  color: #374151;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filter-form select:hover,
+.filter-form select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 4px rgba(59, 130, 246, 0.4);
+  outline: none;
+}
+
+.filter-form .submit-btn {
+  background: linear-gradient(90deg, #1b4ed7, #3b82f6);
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+}
+
+.filter-form .submit-btn:hover {
+  background: linear-gradient(90deg, #2563eb, #1d4ed8);
+}
+
+/* ===== Info Banner ===== */
+.selected-info {
+  text-align: center;
+  background: #e8f0fe;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #1b4ed7;
+}
+
+/* ===== No Marks Message ===== */
+.no-marks-msg {
+  text-align: center;
+  color: #ef4444;
+  font-weight: 500;
+  margin-top: 20px;
+}
+
+/* ===== Marks Table ===== */
+.section-card {
+  margin-bottom: 30px;
+  overflow-x: auto;
+}
+
+table.student-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+
+table.student-table th,
+table.student-table td {
+  text-align: left;
+  padding: 12px 15px;
+}
+
+table.student-table thead {
+  background: linear-gradient(90deg, #1b4ed7, #3b82f6);
+  color: #fff;
+}
+
+table.student-table th {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+table.student-table tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: background 0.2s;
+}
+
+table.student-table tbody tr:hover {
+  background: #f0f9ff;
+}
+
+table.student-table td {
+  font-size: 14px;
+  color: #374151;
+}
+
+/* ===== Publish status colors ===== */
+.published-true {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.published-false {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* ===== Footer Navigation ===== */
+.navigation-footer {
+  display: flex;
+  justify-content: space-around;
+  background: #f8f9fa;
+  padding: 15px 10px;
+  border-radius: 15px;
+}
+
+.navigation-footer .nav-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: #555;
+  font-size: 13px;
+  transition: all 0.3s ease;
+}
+
+.navigation-footer .nav-link.active,
+.navigation-footer .nav-link:hover {
+  color: #2575fc;
+}
+
+.navigation-footer i {
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .dashboard-header h1 {
+    font-size: 22px;
+  }
+
+  .filter-form {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .filter-form select,
+  .filter-form .submit-btn {
+    width: 90%;
+  }
+
+  table.student-table th,
+  table.student-table td {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}

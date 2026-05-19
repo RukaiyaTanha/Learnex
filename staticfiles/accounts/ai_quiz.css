@@ -1,0 +1,239 @@
+/* ===== Reset ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: #f5f7fb;
+    color: #333;
+    min-height: 100vh;
+    padding: 20px;
+}
+/* ===== Header ===== */
+header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+header h1 {
+    font-size: 26px;
+    color: #2575fc;
+    margin-bottom: 6px;
+}
+header p {
+    font-size: 14px;
+    color: #555;
+}
+/* ===== Main Container ===== */
+.ai-quiz-container {
+    max-width: 1400px;
+    margin: auto;
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 28px 30px;
+    box-shadow: 0 12px 35px rgba(0,0,0,0.08);
+}
+
+/* ===== Header ===== */
+.ai-quiz-header {
+    margin-bottom: 25px;
+}
+
+.ai-quiz-header h1 {
+    font-size: 26px;
+    color: #2575fc;
+    margin-bottom: 6px;
+}
+
+.ai-quiz-header p {
+    font-size: 14px;
+    color: #555;
+}
+
+/* ===== Controls ===== */
+.quiz-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.quiz-controls select,
+.quiz-controls input {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.quiz-controls select:focus,
+.quiz-controls input:focus {
+    outline: none;
+    border-color: #2575fc;
+}
+
+/* ===== Prompt Input ===== */
+.quiz-prompt {
+    margin-bottom: 18px;
+}
+
+.quiz-prompt textarea {
+    width: 100%;
+    height: 110px;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    resize: none;
+    font-size: 14px;
+    margin-top: 20px;
+}
+
+.quiz-prompt textarea:focus {
+    outline: none;
+    border-color: #2575fc;
+    box-shadow: 0 0 5px rgba(37,117,252,0.3);
+}
+
+/* ===== Buttons ===== */
+.quiz-btn {
+    background: linear-gradient(135deg, #2575fc, #6a11cb);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 10px 22px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.quiz-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.quiz-btn.secondary {
+    background: #f0f2f7;
+    color: #333;
+}
+
+/* ===== Question Card ===== */
+.question-card {
+    background: #f9fbff;
+    border-left: 4px solid #2575fc;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+}
+
+.question-card h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: #222;
+}
+
+/* ===== Options ===== */
+.option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.option input[type="radio"] {
+    accent-color: #2575fc;
+    cursor: pointer;
+}
+
+/* ===== Answer Input (non-MCQ) ===== */
+.answer-input {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+.answer-input:focus {
+    outline: none;
+    border-color: #2575fc;
+}
+
+/* ===== Submit Area ===== */
+.quiz-submit-area {
+    margin-top: 25px;
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+/* ===== Result Box ===== */
+.quiz-result {
+    margin-top: 25px;
+    background: linear-gradient(135deg, #e8f0ff, #f3f7ff);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+.quiz-result h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: #1a3c6c;
+}
+
+.quiz-result p {
+    font-size: 14px;
+    margin: 6px 0;
+}
+
+/* ===== Footer Navigation ===== */
+.navigation-footer {
+    display: flex;
+    justify-content: space-around;
+    background: #f8f9fa;
+    padding: 15px 10px;
+    border-radius: 15px;
+}
+
+.navigation-footer .nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #555;
+    font-size: 13px;
+    transition: all 0.3s ease;
+}
+
+.navigation-footer .nav-link i {
+    font-size: 20px;
+    margin-bottom: 4px;
+}
+
+.navigation-footer .nav-link.active,
+.navigation-footer .nav-link:hover {
+    color: #2575fc;
+}
+/* ===== Score Badge ===== */
+.score-badge {
+    display: inline-block;
+    background: #2575fc;
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+    margin-top: 8px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .quiz-controls {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,3 +1,7 @@
+databases:
+  - name: learnex-postgres
+    plan: starter
+
 services:
   - type: web
     name: learnex-web
@@ -6,17 +10,15 @@ services:
     buildCommand: "pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput"
     startCommand: "gunicorn core.wsgi:application --bind 0.0.0.0:$PORT"
     envVars:
-      - key: DJANGO_SECRET_KEY
-        fromDatabase: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: learnex-postgres
+          property: connectionString
       - key: DB_ENGINE
-        fromDatabase: false
-      - key: POSTGRES_DB
-        fromDatabase: false
-      - key: POSTGRES_USER
-        fromDatabase: false
-      - key: POSTGRES_PASSWORD
-        fromDatabase: false
-      - key: POSTGRES_HOST
-        fromDatabase: false
-      - key: POSTGRES_PORT
-        fromDatabase: false
+        value: postgresql
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: false
+      - key: ALLOWED_HOSTS
+        value: .onrender.com

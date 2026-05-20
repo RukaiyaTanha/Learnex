@@ -97,7 +97,7 @@
         }
 
         try {
-            const response = await fetch("/accounts/register/", {
+            const response = await fetch("{% url 'register_api' %}", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name, first_name, last_name, email, password, role })
@@ -112,7 +112,7 @@
             }
         } catch(err){
             console.error(err);
-            alert("Server error");
+            alert("Server error. Please try again.");
         }
     });
 </script>

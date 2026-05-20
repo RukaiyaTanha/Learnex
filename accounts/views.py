@@ -52,21 +52,24 @@ def register(request):
         except json.JSONDecodeError:
             return JsonResponse({"success": False, "message": "Invalid JSON payload"}, status=400)
 
-        email = data.get('email')
+        email = (data.get('email') or '').strip()
         password = data.get('password')
-        role = data.get('role')
-        username = data.get('name')
-        first_name = data.get('first_name')
-        last_name = data.get('last_name')
+        role = (data.get('role') or '').strip().title()
+        username = (data.get('name') or '').strip()
+        first_name = (data.get('first_name') or '').strip()
+        last_name = (data.get('last_name') or '').strip()
 
         if not email or not password or not role or not username:
-            return JsonResponse({"success": False, "message": "Missing fields"})
+            return JsonResponse({"success": False, "message": "Missing fields"}, status=400)
 
-        if User.objects.filter(email=email).exists():
-            return JsonResponse({"success": False, "message": "Email already registered"})
+        if role not in dict(CustomUser.ROLE_CHOICES):
+            return JsonResponse({"success": False, "message": "Invalid role selected"}, status=400)
 
-        if User.objects.filter(username=username).exists():
-            return JsonResponse({"success": False, "message": "Username already taken"})
+        if User.objects.filter(email__iexact=email).exists():
+            return JsonResponse({"success": False, "message": "Email already registered"}, status=400)
+
+        if User.objects.filter(username__iexact=username).exists():
+            return JsonResponse({"success": False, "message": "Username already taken"}, status=400)
 
         try:
             User.objects.create_user(
@@ -80,6 +83,8 @@ def register(request):
             return JsonResponse({"success": True, "message": "User registered successfully"})
         except IntegrityError:
             return JsonResponse({"success": False, "message": "Username or email already exists"}, status=400)
+        except Exception as exc:
+            return JsonResponse({"success": False, "message": f"Registration failed: {exc}"}, status=500)
 
     return JsonResponse({"success": False, "message": "Invalid request"})
 
@@ -93,28 +98,36 @@ def registration_page(request):
 @csrf_exempt
 def login_api(request):
     if request.method == "POST":
-        data = json.loads(request.body)
-        email = data.get("email")
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"success": False, "message": "Invalid JSON payload"}, status=400)
+
+        email = (data.get("email") or '').strip()
         password = data.get("password")
-        role = data.get("role")  
+        role = (data.get("role") or '').strip().lower()
 
         if not email or not password or not role:
-            return JsonResponse({"success": False, "message": "Missing email, password, or role"})
+            return JsonResponse({"success": False, "message": "Missing email, password, or role"}, status=400)
 
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.filter(email__iexact=email).order_by("id").first()
+
+            if not user:
+                return JsonResponse({"success": False, "message": "Invalid email or password"}, status=401)
 
             if not user.check_password(password):
-                return JsonResponse({"success": False, "message": "Invalid email or password"})
+                return JsonResponse({"success": False, "message": "Invalid email or password"}, status=401)
 
-            if getattr(user, "role", "").lower() != role.lower():
-                return JsonResponse({"success": False, "message": f"This account is not a {role}"})
+            user_role = getattr(user, "role", "").strip().lower()
+            if user_role != role:
+                return JsonResponse({"success": False, "message": f"This account is not a {role}"}, status=403)
 
             login(request, user)
 
-            if role.lower() == "student":
+            if role == "student":
                 redirect_url = reverse("student_dashboard")
-            elif role.lower() == "teacher":
+            elif role == "teacher":
                 redirect_url = reverse("teacher_dashboard")
             else:
                 redirect_url = reverse("student_dashboard")
@@ -127,8 +140,8 @@ def login_api(request):
                 "redirect_url": redirect_url,
             })
 
-        except User.DoesNotExist:
-            return JsonResponse({"success": False, "message": "Invalid email or password"})
+        except Exception as exc:
+            return JsonResponse({"success": False, "message": f"Login failed: {exc}"}, status=500)
 
     return JsonResponse({"success": False, "message": "Invalid request"})
 

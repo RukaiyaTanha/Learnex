@@ -17,7 +17,7 @@ DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
 # Allow hosts configurable via `ALLOWED_HOSTS` env var (comma-separated).
 # Default includes Render's `onrender.com` subdomains so the app works there
 # even if the environment variable is not set yet.
-ALLOWED_HOSTS = [h for h in os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost,.onrender.com').split(',') if h]
+ALLOWED_HOSTS = [h for h in os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost,testserver,.onrender.com').split(',') if h]
 
 INSTALLED_APPS = [
     'django.contrib.admin',

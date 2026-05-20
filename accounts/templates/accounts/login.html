@@ -73,17 +73,18 @@ document.querySelector(".login-form").addEventListener("submit", async function(
             body: JSON.stringify({ email, password, role: selectedRole })
         });
 
-        const data = await response.json();
+        const rawText = await response.text();
+        const data = rawText ? JSON.parse(rawText) : {};
 
         if (data.success) {
             alert("Login successful! Welcome " + data.username + " (" + data.role + ")");
             window.location.href = data.redirect_url;
         } else {
-            alert("❌ " + data.message);
+            alert("❌ " + (data.message || "Login failed."));
         }
     } catch (err) {
         console.error(err);
-        alert("Server error. Try again later.");
+        alert("Server error. Please try again.");
     }
 });
 </script>

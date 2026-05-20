@@ -7,7 +7,7 @@ services:
     name: learnex-web
     env: python
     plan: starter
-    buildCommand: "pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput"
+    buildCommand: "pip install -r requirements.txt && python manage.py showmigrations accounts && python manage.py migrate --noinput --fake-initial && python manage.py showmigrations accounts && python manage.py collectstatic --noinput"
     startCommand: "gunicorn core.wsgi:application --bind 0.0.0.0:$PORT"
     envVars:
       - key: DATABASE_URL

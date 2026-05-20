@@ -49,3 +49,14 @@ class AccountsConfig(AppConfig):
             logger.warning("Startup migrations completed.")
         except Exception:
             logger.exception("Startup migrations failed.")
+        finally:
+            # Optionally seed courses when requested (only runs once per container)
+            try:
+                if os.getenv("SEED_COURSES") == "1":
+                    seed_lock = "/tmp/learnex_seed_courses.lock"
+                    if not os.path.exists(seed_lock):
+                        logger.warning("Seeding courses as SEED_COURSES=1")
+                        call_command("import_course_catalog")
+                        open(seed_lock, "w").close()
+            except Exception:
+                logger.exception("Seeding courses failed.")

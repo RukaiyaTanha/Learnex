@@ -22,3 +22,5 @@ services:
         value: false
       - key: ALLOWED_HOSTS
         value: .onrender.com
+      - key: SEED_COURSES
+        value: "1"

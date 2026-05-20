@@ -210,6 +210,7 @@ def save_courses_api(request):
 @login_required(login_url='/accounts/login-page/')
 def course_selection_page(request):
     user = request.user
+    _ensure_course_catalog_loaded()
     courses = Course.objects.order_by("name")
     user_courses_qs = UserCourse.objects.filter(user=user).values_list('course__code', flat=True)
     user_courses = list(user_courses_qs)
@@ -1583,6 +1584,7 @@ def teacher_dashboard(request):
 @login_required(login_url='/accounts/login-page/')
 def teacher_course_selection_page(request):
     user = request.user
+    _ensure_course_catalog_loaded()
     courses = Course.objects.order_by("name")
 
     selections = TeacherCourseSelection.objects.filter(teacher=user)
@@ -1597,6 +1599,20 @@ def teacher_course_selection_page(request):
         "username": user.username,
     }
     return render(request, "accounts/teacher_course_selection.html", context)
+
+
+def _ensure_course_catalog_loaded():
+    """Populate the course table on demand if a deployed DB starts empty."""
+    if Course.objects.exists():
+        return
+
+    # Only do this when the catalog table is genuinely empty.
+    try:
+        from django.core.management import call_command
+        call_command("import_course_catalog")
+    except Exception:
+        # Fall back to the empty page; the next request will try again.
+        pass
 
 @csrf_exempt
 @login_required(login_url='/accounts/login-page/')

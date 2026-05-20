@@ -24,10 +24,15 @@
                         <option value="" selected disabled>Select a course</option>
                         {% for course in courses %}
                             <option value="{{ course.code }}">{{ course.name }}</option>
+                        {% empty %}
+                            <option value="" disabled>No courses available yet</option>
                         {% endfor %}
                     </select>
                     <i class="fas fa-chevron-down"></i>
                 </div>
+                {% if not courses %}
+                    <p class="empty-state">Courses are being prepared. Refresh after the catalog is added.</p>
+                {% endif %}
                 <button id="add-course-btn" class="start-btn">Add Course</button>
             </div>
         </div>

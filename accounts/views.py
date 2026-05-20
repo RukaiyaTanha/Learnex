@@ -210,7 +210,7 @@ def save_courses_api(request):
 @login_required(login_url='/accounts/login-page/')
 def course_selection_page(request):
     user = request.user
-    courses = Course.objects.all()
+    courses = Course.objects.order_by("name")
     user_courses_qs = UserCourse.objects.filter(user=user).values_list('course__code', flat=True)
     user_courses = list(user_courses_qs)
 
@@ -1583,7 +1583,7 @@ def teacher_dashboard(request):
 @login_required(login_url='/accounts/login-page/')
 def teacher_course_selection_page(request):
     user = request.user
-    courses = Course.objects.all()
+    courses = Course.objects.order_by("name")
 
     selections = TeacherCourseSelection.objects.filter(teacher=user)
     # Dict: { "Spring": ["CSE101", "CSE102"], "Fall": ["CSE201"] }

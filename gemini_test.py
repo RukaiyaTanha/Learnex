@@ -1,7 +1,8 @@
+import os
 from google import genai
 
 # --- Step 1: Initialize client ---
-client = genai.Client(api_key="AIzaSyCPopZHtLDeaMwiyB5rYpDZb6F4V9LS6OM")
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 # --- Step 2: Choose model ---
 model = "models/gemini-2.5-flash"   # or "gemini-1.5-pro-latest"

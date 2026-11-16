@@ -1,0 +1,109 @@
+<style>
+#student-list-modal .modal-box {
+    position: relative;
+    padding: 30px 35px;
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    font-size: 14px;
+    color: #334155;
+}
+
+#student-list-modal .close-btn {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    float: none;
+    border: none;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+#student-list-modal .close-btn:hover {
+    background: #e2e8f0;
+    color: #dc2626;
+}
+
+#student-list-modal h2 {
+    font-size: 19px;
+    font-weight: 600;
+    color: #1e3a8a;
+    margin: 0 0 4px;
+    padding-right: 40px;
+}
+
+#student-list-modal .student-table {
+    font-size: 13px;
+    margin-top: 15px;
+}
+
+#student-list-modal .student-table th {
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+#student-list-modal .student-table td:last-child,
+#student-list-modal .student-table th:last-child {
+    text-align: right;
+}
+
+#student-list-modal .view-btn {
+    padding: 8px 18px;
+    font-size: 13px;
+}
+</style>
+
+<div class="modal-overlay" id="student-list-modal">
+    <div class="modal-box">
+
+        <button class="close-btn" onclick="closeModal()" aria-label="Close">&times;</button>
+
+        <h2>{{ section.course.name }}</h2>
+
+        <hr>
+
+        <table class="student-table">
+            <thead>
+                <tr>
+                    <th>Student ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td>{{ student.student_id }}</td>
+                    <td>{{ student.student_name }}</td>
+                    <td>{{ student.email }}</td>
+                    <td>
+                        <button class="view-btn" onclick="openStudentPerformance('{{ student.email }}','{{ section.course.id }}')">
+                            View Performance
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">No students found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+<div id="performance-modal-container"></div>

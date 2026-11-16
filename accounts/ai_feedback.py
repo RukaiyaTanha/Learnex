@@ -1,10 +1,22 @@
-import google.generativeai as genai
+import os
 import markdown2
 from django.conf import settings
+from google import genai
+import json
 
-genai.configure(api_key="YOUR_API_KEY")
 def generate_ai_feedback(performance_rate, results, topic_name):
     try:
+        api_key = getattr(settings, "GEMINI_API_KEY", None) or os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            return {
+                "weak_areas": "⚠️ AI feedback unavailable.",
+                "improvement": "Missing GEMINI_API_KEY in environment.",
+                "prediction": "",
+                "resources": "",
+            }
+
+        client = genai.Client(api_key=api_key)
+
         structured_data = []
         for r in results:
             structured_data.append({
@@ -59,9 +71,11 @@ Rules:
 
 """
 
-        model = genai.GenerativeModel("gemini-2.5-flash-lite-preview-09-2025")
-        response = model.generate_content(prompt)
-        ai_text = response.text
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+        )
+        ai_text = response.text or ""
         feedback = {
             "weak_areas": "",
             "improvement": "",
@@ -133,3 +147,64 @@ Rules:
             "prediction": "",
             "resources": "",
         }
+
+def generate_performance_feedback(evaluation_data):
+
+    api_key = getattr(
+        settings,
+        "GEMINI_API_KEY",
+        None
+    ) or os.getenv("GEMINI_API_KEY")
+
+
+    client = genai.Client(
+        api_key=api_key
+    )
+
+
+    prompt = f"""
+
+You are an AI academic tutor.
+
+Analyze this student's quiz performance.
+
+Data:
+
+{evaluation_data}
+
+
+Return ONLY JSON:
+
+{{
+"weak_area":[],
+"focus_area":[],
+"recommendation":[]
+}}
+
+Rules:
+
+weak_area:
+Identify concepts where student made mistakes.
+
+focus_area:
+What student should study next.
+
+recommendation:
+Give practical learning steps.
+
+"""
+
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt
+    )
+
+
+    text=response.text.strip()
+
+    text=text.replace("```json","")
+    text=text.replace("```","")
+
+
+    return json.loads(text)

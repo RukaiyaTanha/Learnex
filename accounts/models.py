@@ -81,7 +81,92 @@ class Marks(models.Model):
 
     def __str__(self):
         return f"{self.student.username} - {self.course.name} - {self.semester} - {self.section}"
+
+#---mark history---
+class MarksHistory(models.Model):
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
+    )
+
+    course = models.ForeignKey(
+        'Course',
+        on_delete=models.CASCADE
+    )
+
+    quiz1 = models.FloatField(default=0)
+    quiz2 = models.FloatField(default=0)
+    quiz3 = models.FloatField(default=0)
+
+    attendance = models.FloatField(default=0)
+    assignment = models.FloatField(default=0)
+    presentation = models.FloatField(default=0)
+    termexam = models.FloatField(default=0)
+
+    semester = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True
+    )
+
+    section = models.CharField(
+        max_length=5,
+        null=True,
+        blank=True
+    )
+
+    saved_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+#-------teacher Notification-------
+class TeacherNotification(models.Model):
+
+    teacher = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="teacher_notifications"
+    )
+
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="student_notifications"
+    )
+
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE
+    )
+
+    semester = models.CharField(
+        max_length=50
+    )
+
+    section = models.CharField(
+        max_length=5
+    )
+
+    title = models.CharField(
+        max_length=200
+    )
+
+    message = models.TextField()
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    is_read = models.BooleanField(
+        default=False
+    )
+    resolved = models.BooleanField(default=False)
     
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.student.username} → {self.teacher.username}"
 # ---------------------- Syllabus ----------------------
 class Syllabus(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

@@ -1,0 +1,322 @@
+<style>
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.55);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.modal-box {
+    position: relative;
+    background: white;
+    width: 90%;
+    max-width: 1100px;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 30px 35px;
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    font-size: 14px;
+    color: #334155;
+}
+
+/* Professional icon-style close button */
+.close-btn {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.close-btn:hover {
+    background: #e2e8f0;
+    color: #dc2626;
+}
+
+.modal-box h2 {
+    font-size: 19px;
+    font-weight: 600;
+    color: #1e3a8a;
+    margin: 0 0 4px;
+    padding-right: 40px;
+}
+
+.modal-box h3 {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #64748b;
+    margin: 26px 0 12px;
+}
+
+.student-info {
+    background: #f8fafc;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid #eef1f5;
+    margin-bottom: 16px;
+    font-size: 13px;
+}
+
+.student-info p {
+    margin: 3px 0;
+}
+
+.performance-card {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.summary-box {
+    background: #f8fafc;
+    padding: 14px;
+    border-radius: 10px;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    font-size: 12.5px;
+    color: #64748b;
+}
+
+.summary-box strong {
+    display: block;
+    font-size: 20px;
+    font-weight: 600;
+    color: #2563eb;
+    margin-top: 4px;
+}
+
+.student-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 12.5px;
+}
+
+.student-table th {
+    background: #2563eb;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    font-weight: 500;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.student-table td {
+    padding: 9px;
+    border-bottom: 1px solid #eef1f5;
+    text-align: center;
+}
+
+.student-table tr:hover {
+    background: #f8fafc;
+}
+
+.course-average {
+    font-weight: 600;
+    color: #16a34a;
+}
+#learningTrendContainer {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(350px,1fr));
+    gap:20px;
+}
+
+.chart-card {
+    height:300px;
+    background:#f8fafc;
+    padding:15px;
+    border-radius:12px;
+}
+</style>
+
+<div class="modal-overlay">
+
+<div class="modal-box">
+
+<button class="close-btn" onclick="closePerformanceModal()" aria-label="Close">
+    &times;
+</button>
+
+<h2>
+{{ student.get_full_name }}
+</h2>
+
+<div class="student-info">
+
+<p>
+<strong>Name:</strong> {{ student.get_full_name }}
+</p>
+
+<p>
+<strong>Email:</strong> {{ student.email }}
+</p>
+
+</div>
+
+
+<hr>
+
+
+<h3>Offline Performance</h3>
+
+
+<table class="student-table">
+
+<tr>
+<th>Course</th>
+<th>Quiz 1</th>
+<th>Quiz 2</th>
+<th>Quiz 3</th>
+<th>Assignment</th>
+<th>Presentation</th>
+<th>Term Exam</th>
+</tr>
+
+
+{% for mark in marks %}
+
+<tr>
+
+<td>
+{{ mark.course.name }}
+</td>
+
+
+<td>
+{{ mark.quiz1 }}
+</td>
+
+
+<td>
+{{ mark.quiz2 }}
+</td>
+
+
+<td>
+{{ mark.quiz3 }}
+</td>
+
+
+<td>
+{{ mark.assignment }}
+</td>
+
+
+<td>
+{{ mark.presentation }}
+</td>
+
+
+<td>
+{{ mark.termexam }}
+</td>
+
+
+</tr>
+
+
+{% empty %}
+
+<tr>
+<td colspan="7">
+No marks available
+</td>
+</tr>
+
+{% endfor %}
+
+
+</table>
+
+
+<br>
+
+
+<h3>Online AI Performance</h3>
+
+
+<div class="performance-card">
+
+
+<div class="summary-box">
+
+AI Quiz Attempts
+
+<strong>
+{{ ai_attempts }}
+</strong>
+
+</div>
+
+
+
+<div class="summary-box">
+
+Average AI Score
+
+<strong>
+{{ avg_ai_score }}%
+</strong>
+
+</div>
+
+
+
+
+<div class="summary-box">
+
+Latest AI Quiz
+
+<strong>
+
+{% if latest_ai %}
+
+{{ latest_ai.score }}/{{ latest_ai.max_score }}
+
+{% else %}
+
+No Attempt
+
+{% endif %}
+
+</strong>
+
+</div>
+
+</div>
+<h3>AI Learning Trend</h3>
+
+<script id="trend-data" type="application/json">
+{{ learning_trend|safe }}
+</script>
+
+<div id="learningTrendContainer"></div>
+
+</div>
+
+</div>

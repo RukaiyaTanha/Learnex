@@ -11,21 +11,23 @@
 <div class="container">
 
   <header>
-    <h1>{{ username }}’s Courses</h1>
-    <p>Here are your selected courses and their statuses.</p>
+    <h1>{{ username }}’s Assigned Courses</h1>
+    <p>Courses, semesters, and sections synced from your teacher's student list.</p>
   </header>
 
   <div class="courses-grid">
-    {% for uc in user_courses %}
+    {% for section in assigned_sections %}
     <div class="quiz-option-card">
-      <h3>{{ uc.course.name }}</h3>
+      <h3>{{ section.course.name }}</h3>
+      <p><strong>Course Code:</strong> {{ section.course.code }}</p>
+      <p><strong>Semester:</strong> {{ section.semester }}</p>
+      <p><strong>Section:</strong> {{ section.section_name }}</p>
       <div class="course-status unlocked">
-        <i class="fas fa-check"></i> Unlocked
+        <i class="fas fa-check"></i> Assigned by Teacher
       </div>
-
     </div>
     {% empty %}
-    <p>No courses selected yet.</p>
+    <p>No assigned courses yet. Your teacher must upload your student list first.</p>
     {% endfor %}
   </div>
 

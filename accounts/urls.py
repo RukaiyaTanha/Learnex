@@ -59,6 +59,9 @@ urlpatterns = [
     path("teacher/view-performance/", views.teacher_view_performance, name="teacher_view_performance"),
     path("teacher/upload-syllabus/", views.teacher_upload_syllabus, name="teacher_upload_syllabus"),
     path("student/view-syllabus/", views.student_view_syllabus, name="student_view_syllabus"),
-
-
+    path("teacher/view-performance/", views.teacher_view_performance, name="teacher_view_performance"),
+    path("teacher/student-list/<int:section_id>/", views.teacher_student_list, name="teacher_student_list"),
+    path("teacher/student-performance/<str:email>/<int:course_id>/", views.student_performance_detail, name="student_performance_detail"),
+    path("teacher/my-syllabus/", views.teacher_my_syllabus, name="teacher_my_syllabus"),
+    path('teacher/notifications/', views.teacher_notifications, name='teacher_notifications'),
 ]

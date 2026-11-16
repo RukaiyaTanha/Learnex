@@ -64,23 +64,19 @@
 {% endif %}
 
 <div class="navigation-footer">
-      <a href="{% url 'teacher_dashboard' %}" class="nav-link">
-          <i class="fas fa-home"></i>
-          <span>Home</span>
-      </a>
-      <a href="{% url 'teacher_course_selection_page' %}" class="nav-link">
-          <i class="fas fa-book"></i>
-          <span>Courses</span>
-      </a>
-      <a href="{% url 'selected_courses_page' %}" class="nav-link">
-            <i class="fas fa-bookmark"></i>
-            <span>My Courses</span>
-      </a>
-      <a href="#" class="nav-link">
-          <i class="fas fa-cog"></i>
-          <span>Settings</span>
-      </a>
-  </div>
+        <a href="{% url 'teacher_dashboard' %}" class="nav-link">
+            <i class="fas fa-home"></i><span>Home</span>
+        </a>
+        <a href="{% url 'teacher_upload_syllabus' %}" class="nav-link active">
+            <i class="fas fa-file-upload"></i><span>Upload Syllabus</span>
+        </a>
+        <a href="{% url 'teacher_my_syllabus' %}" class="nav-link">
+            <i class="fas fa-file-alt"></i><span>Selected Syllabus</span>
+        </a>
+        <a href="#" class="nav-link">
+            <i class="fas fa-cog"></i><span>Settings</span>
+        </a>
+    </div>
 </div>
 </body>
 </html>

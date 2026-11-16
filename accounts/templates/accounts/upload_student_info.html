@@ -45,10 +45,7 @@
   <div class="form-group">
     <label for="sectionSelect"><i class="fas fa-users"></i> Section</label>
     <select id="sectionSelect" name="section" required>
-      <option value="" disabled selected>Select Section</option>
-      {% for sec in section_choices %}
-        <option value="{{ sec }}">{{ sec }}</option>
-      {% endfor %}
+    <option value="" disabled selected>Select Section</option>
     </select>
   </div>
   <div class="form-group">
@@ -82,6 +79,7 @@
 const semesterSelect = document.getElementById('semesterSelect');
 const courseSelect = document.getElementById('courseSelect');
 const semesterCourses = JSON.parse('{{ semester_courses_json|escapejs }}');
+const semesterCourseSections = JSON.parse('{{ semester_course_sections_json|escapejs }}');
 
 function populateCourses(semester) {
   const courses = semesterCourses[semester] || [];
@@ -93,9 +91,45 @@ function populateCourses(semester) {
     courseSelect.appendChild(opt);
   });
 }
+function populateSections(semester, course){
 
-semesterSelect.addEventListener('change', () => {
-  populateCourses(semesterSelect.value);
+    sectionSelect.innerHTML =
+        '<option value="" disabled selected>Select Section</option>';
+
+    if(
+        semesterCourseSections[semester] &&
+        semesterCourseSections[semester][course]
+    ){
+
+        semesterCourseSections[semester][course].forEach(section => {
+
+            const option = document.createElement("option");
+
+            option.value = section;
+            option.textContent = section;
+
+            sectionSelect.appendChild(option);
+
+        });
+
+    }
+
+}
+semesterSelect.addEventListener("change", () => {
+
+    populateCourses(semesterSelect.value);
+
+    sectionSelect.innerHTML =
+    '<option value="" disabled selected>Select Section</option>';
+
+});
+courseSelect.addEventListener("change", () => {
+
+    populateSections(
+        semesterSelect.value,
+        courseSelect.value
+    );
+
 });
 window.addEventListener('DOMContentLoaded', () => {
   if (semesterSelect.value) {

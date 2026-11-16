@@ -7,13 +7,76 @@
     <link rel="stylesheet" href="{% static 'accounts/ai_quiz.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <style>
+        /* AI Performance Analysis */
+        .ai-analysis {
+            margin-top: 30px;
+            padding: 25px 30px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f6f4ff 0%, #f9fafc 100%);
+            border-left: 4px solid #6c5ce7;
+        }
+
+        .ai-analysis h3 {
+            margin: 0 0 18px;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .ai-analysis h4 {
+            margin: 20px 0 10px;
+            padding-left: 10px;
+            font-size: 15px;
+            color: #444;
+            border-left: 3px solid #ccc;
+        }
+
+        .ai-analysis h4:nth-of-type(1) {
+            border-left-color: #e05252;
+        }
+
+        .ai-analysis h4:nth-of-type(2) {
+            border-left-color: #f0ad4e;
+        }
+
+        .ai-analysis h4:nth-of-type(3) {
+            border-left-color: #2f9e8f;
+        }
+
+        .ai-analysis ul {
+            list-style: none;
+            margin: 0 0 10px;
+            padding: 0;
+        }
+
+        .ai-analysis li {
+            position: relative;
+            padding: 8px 0 8px 22px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #555;
+            border-bottom: 1px dashed #e6e6e6;
+        }
+
+        .ai-analysis li:last-child {
+            border-bottom: none;
+        }
+
+        .ai-analysis li::before {
+            content: "\2022";
+            position: absolute;
+            left: 0;
+            font-size: 18px;
+            color: #6c5ce7;
+        }
+    </style>
 </head>
 <body>
 
 <div class="ai-quiz-container">
     <header>
-        <h1>Hi {{ request.user.username }}, Ready to test more?</h1>
-        <p>Your personal AI Assistant for extra practice, explanations, and exercises.</p>
+        <h1>Hi {{ request.user.username }}, Ready to test your knowledge?</h1>
+        <p>Your personal AI Assistant for extra practice,exercises, and AI feedback.</p>
     </header>
 
     <div class="quiz-controls">
@@ -113,17 +176,17 @@ function generateQuiz() {
     });
 }
 
-$("#generate-quiz").click(generateQuiz);
+    $("#generate-quiz").click(generateQuiz);
 
-$("#user-prompt").keydown(function(e) {
-    if (e.key === "Enter" && !e.shiftKey) { 
-        e.preventDefault(); 
-        generateQuiz();
-    }
-});
+    $("#user-prompt").keydown(function(e) {
+        if (e.key === "Enter" && !e.shiftKey) { 
+            e.preventDefault(); 
+            generateQuiz();
+        }
+    });
 
-$("#quiz-form").submit(function (e) {
-    e.preventDefault();
+    $("#quiz-form").submit(function (e) {
+        e.preventDefault();
 
     let course_id = $("#course-select").val();
     let filename = $("#topic-select").val();
@@ -172,10 +235,30 @@ $("#quiz-form").submit(function (e) {
     });
 
     html += `</div>`;
-    $("#quiz-result").html(html);
-}
+    html += `
+    <div class="ai-analysis">
+        <h3>AI Performance Analysis</h3>
+        <h4>Weak Areas</h4>
+        <ul>
+            ${
+            res.ai_feedback.weak_area
+            .map(x=>`<li>${x}</li>`)
+            .join("")
+            }
+        </ul>
+        <h4>Focus Areas</h4>
+        <ul>
+            ${res.ai_feedback.focus_area.map(x=>`<li>${x}</li>`).join("")}
+        </ul>
+        <h4>Recommendation</h4>
+        <ul>
+            ${res.ai_feedback.recommendation.map(x=>`<li>${x}</li>`).join("")}
+        </ul>
+    </div>
+    `;
+    $("#quiz-result").html(html);}
+});
 
-    });
 });
 </script>
 </body>

@@ -22,9 +22,12 @@
       <h3 class="course-title">{{ course }}</h3>
       {% for sec_name, students in sections.items %}
         <div class="section-card">
-          <h4>
-            Section {{ sec_name }}
-            <!-- Delete form/button -->
+          <div class="section-card-header">
+            <button type="button" class="section-toggle" data-modal-target="students-{{ sem|slugify }}-{{ course|slugify }}-{{ sec_name|slugify }}">
+              <span><i class="fas fa-users"></i> Section {{ sec_name }}</span>
+              <small>{{ students|length }} student{{ students|length|pluralize }}</small>
+              <i class="fas fa-arrow-up-right-from-square toggle-icon"></i>
+            </button>
             <form method="post" action="{% url 'delete_section' %}" style="display:inline;">
               {% csrf_token %}
               <input type="hidden" name="semester" value="{{ sem }}">
@@ -32,12 +35,7 @@
               <input type="hidden" name="section" value="{{ sec_name }}">
               <button type="submit" class="delete-btn"><i class="fas fa-trash"></i> Delete</button>
             </form>
-          </h4>
-          <ul>
-            {% for student in students %}
-              <li>{{ student.student_name }} - {{ student.student_id }} - {{ student.email }}</li>
-            {% endfor %}
-          </ul>
+          </div>
         </div>
       {% endfor %}
     {% endfor %}
@@ -62,5 +60,83 @@
 </div>
 </section>
 </div>
+
+{% if uploaded_data %}
+  {% for sem, courses in uploaded_data.items %}
+    {% for course, sections in courses.items %}
+      {% for sec_name, students in sections.items %}
+        <div id="students-{{ sem|slugify }}-{{ course|slugify }}-{{ sec_name|slugify }}" class="student-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title-{{ sem|slugify }}-{{ course|slugify }}-{{ sec_name|slugify }}" hidden>
+          <div class="student-modal-card">
+            <div class="student-modal-header">
+              <div>
+                <h3 id="modal-title-{{ sem|slugify }}-{{ course|slugify }}-{{ sec_name|slugify }}">Section {{ sec_name }} Students</h3>
+                <p>{{ course }} | {{ sem }} | {{ students|length }} student{{ students|length|pluralize }}</p>
+              </div>
+              <button type="button" class="modal-close" aria-label="Close student table">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="student-table-wrap">
+              <table class="student-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Student Name</th>
+                    <th>Student ID</th>
+                    <th>Email</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for student in students %}
+                    <tr>
+                      <td>{{ forloop.counter }}</td>
+                      <td>{{ student.student_name }}</td>
+                      <td>{{ student.student_id }}</td>
+                      <td>{{ student.email }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="4">No students uploaded for this section.</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% endfor %}
+  {% endfor %}
+{% endif %}
+
+<script>
+function closeStudentModal(modal) {
+  modal.hidden = true;
+  document.body.classList.remove('modal-open');
+}
+
+document.querySelectorAll('[data-modal-target]').forEach(button => {
+  button.addEventListener('click', () => {
+    const modal = document.getElementById(button.dataset.modalTarget);
+    if (!modal) return;
+    modal.hidden = false;
+    document.body.classList.add('modal-open');
+    modal.querySelector('.modal-close')?.focus();
+  });
+});
+
+document.querySelectorAll('.student-modal').forEach(modal => {
+  modal.addEventListener('click', event => {
+    if (event.target === modal || event.target.closest('.modal-close')) {
+      closeStudentModal(modal);
+    }
+  });
+});
+
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape') return;
+  document.querySelectorAll('.student-modal:not([hidden])').forEach(closeStudentModal);
+});
+</script>
 </body>
 </html>

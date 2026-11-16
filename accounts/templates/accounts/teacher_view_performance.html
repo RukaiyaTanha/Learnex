@@ -1,98 +1,475 @@
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Teacher - Student Overall Performance</title>
-  <link rel="stylesheet" href="{% static 'accounts/teacher_view_performance.css' %}">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher Performance Dashboard</title>
+<link rel="stylesheet" href="{% static 'accounts/teacher_view_performance.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+body.modal-open .container {
+    filter: blur(6px);
+    pointer-events: none;
+}
+.performance-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.performance-card h3 {
+    margin-bottom: 15px;
+}
+.info-row {
+    display:flex;
+    gap:20px;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+}
+.info-box {
+    background:#f5f7fb;
+    padding:15px 20px;
+    border-radius:10px;
+}
+.view-btn {
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:12px 25px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:15px;
+}
+.view-btn:hover {
+    background:#1d4ed8;
+}
+/* Modal */
+
+.modal-overlay {
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.45);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:999;
+}
+.modal-box {
+    background:white;
+    width:85%;
+    max-height:85vh;
+    overflow-y:auto;
+    padding:30px;
+    border-radius:15px;
+}
+.close-btn {
+    float:right;
+    background:#ef4444;
+    color:white;
+    border:none;
+    padding:5px 15px;
+    border-radius:6px;
+    cursor:pointer;
+}
+.student-table {
+    width:100%;
+    border-collapse:collapse;
+}
+.student-table th,
+.student-table td {
+    padding:12px;
+    border-bottom:1px solid #ddd;
+    text-align:left;
+}
+.student-table th {
+    background:#f1f5f9;
+}
+
+</style>
+
 </head>
+
+
 <body>
+
+
 <div class="container">
-  <header class="header">
-      <h1>Hi {{ username }}, Student Performance Dashboard</h1>
-      <p>Monitor overall and course-wise performance of your students at a glance.</p>
-  </header>
-  <main class="dashboard-main">
-    {% if students_data %}
-      {% for s in students_data %}
-      <div class="student-card">
-        <section class="student-summary">
-          <h3>{{ s.name }}</h3>
-          <span class="email">{{ s.email }}</span>
-          <div class="metrics">
-            <div class="metric">
-              <span>Completed Quizzes</span>
-              <strong>{{ s.completed_quizzes|default:"0" }}</strong>
-            </div>
-            <div class="metric">
-              <span>Total Score</span>
-              <strong>{{ s.total|default:"0"|floatformat:2 }}%</strong>
-              <span class="status {% if s.total|default:0 > 80 %}good{% elif s.total|default:0 > 60 %}average{% else %}poor{% endif %}">
-                {% if s.total|default:0 > 80 %}Excellent{% elif s.total|default:0 > 60 %}Good{% else %}Needs Work{% endif %}
-              </span>
-            </div>
-            <div class="metric">
-              <span>Predicted</span>
-              <strong>{{ s.predicted|default:"0"|floatformat:2 }}%</strong>
-            </div>
-          </div>
-          <div class="progress-bar-background">
-            <div class="progress-bar-fill" style="--fill-width: {{ s.total|default:0 }}%;"></div>
-          </div>
-        </section>
-        {% if s.courses %}
-        <section class="course-performance-section">
-          <h4>Course-wise Performance</h4>
-          <table class="course-performance-table">
-            <thead>
-              <tr>
-                <th>Course</th>
-                <th>Performance</th>
-                <th>Progress</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for course in s.courses %}
-              <tr>
-                <td>{{ course.name }}</td>
-                <td>{{ course.performance }}%</td>
-                <td>
-                  <div class="progress-bar-background small-bar">
-                    <div class="progress-bar-fill" style="--fill-width: {{ course.performance|default:0 }}%;"></div>
-                  </div>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </section>
-        {% endif %}
 
-      </div>
-      {% endfor %}
-    {% else %}
-      <p class="no-data">No student records found.</p>
-    {% endif %}
-  </main>
 
-  <!-- Navigation Footer -->
-  <footer class="navigation-footer">
-    <a href="{% url 'teacher_dashboard' %}" class="nav-link"><i class="fas fa-home"></i><span>Home</span></a>
-    <a href="{% url 'teacher_published_marks_page' %}" class="nav-link"><i class="fas fa-users"></i><span>Student Marks</span></a>
-    <a href="#" class="nav-link"><i class="fas fa-cog"></i><span>Settings</span></a>
-  </footer>
+<header class="header">
+
+<h1>
+Hi {{ username }}, Student Performance Dashboard
+</h1>
+
+<p>
+Monitor student performance by course and semester.
+</p>
+
+</header>
+
+
+
+<main class="dashboard-main">
+
+
+{% if sections %}
+
+
+{% for section in sections %}
+
+
+<div class="performance-card">
+
+
+<h3>
+
+{{ section.course.name }}
+
+</h3>
+
+
+
+<div class="info-row">
+
+
+<div class="info-box">
+
+<strong>Course Code:</strong>
+
+{{ section.course.code }}
+
 </div>
 
+
+
+<div class="info-box">
+
+<strong>Semester:</strong>
+
+{{ section.semester }}
+
+</div>
+
+
+
+<div class="info-box">
+
+<strong>Section:</strong>
+
+{{ section.section_name }}
+
+</div>
+
+
+
+</div>
+
+
+
+<button
+class="view-btn"
+onclick="openStudentList('{{ section.id }}')">
+
+<i class="fa fa-users"></i>
+
+View Students
+
+</button>
+
+
+</div>
+
+
+
+{% endfor %}
+
+
+{% else %}
+
+
+<p class="no-data">
+No course records found.
+</p>
+
+{% endif %}
+
+</main>
+
+<footer class="navigation-footer">
+
+<a href="{% url 'teacher_dashboard' %}" class="nav-link">
+
+<i class="fas fa-home"></i>
+
+<span>Home</span>
+
+</a>
+
+<a href="{% url 'teacher_published_marks_page' %}" class="nav-link">
+
+<i class="fas fa-users"></i>
+
+<span>Student Marks</span>
+
+</a>
+
+
+
+<a href="#" class="nav-link">
+
+<i class="fas fa-cog"></i>
+
+<span>Settings</span>
+
+</a>
+
+
+
+</footer>
+
+
+
+</div>
+
+<!-- Modal Area -->
+
+<div id="modal-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  document.querySelectorAll('.progress-bar-fill').forEach(el => {
-      const percent = parseFloat(getComputedStyle(el).getPropertyValue('--fill-width')) || 0;
-      el.style.width = percent + '%';
-      if (percent < 60) el.style.background = 'linear-gradient(90deg, #f44336, #e57373)';
-      else if (percent < 80) el.style.background = 'linear-gradient(90deg, #ff9800, #ffb74d)';
-      else el.style.background = 'linear-gradient(90deg, #4caf50, #81c784)';
-  });
+
+function openStudentList(sectionId){
+
+
+fetch(`/accounts/teacher/student-list/${sectionId}/`)
+
+.then(response=>response.text())
+
+.then(data=>{
+
+
+document.getElementById(
+"modal-container"
+).innerHTML=data;
+
+
+document.body.classList.add(
+"modal-open"
+);
+
+
+});
+
+
+}
+
+
+
+function closeModal(){
+
+
+document.getElementById(
+"modal-container"
+).innerHTML="";
+
+
+document.body.classList.remove(
+"modal-open"
+);
+
+
+}
+
+function openStudentPerformance(email, courseId){
+
+fetch(
+`/accounts/teacher/student-performance/${email}/${courseId}/`
+)
+
+.then(response=>response.text())
+
+.then(data=>{
+
+
+document.getElementById(
+"performance-modal-container"
+).innerHTML = data;
+
+
+setTimeout(() => {
+
+    createLearningTrendChart();
+
+}, 100);
+
+
+});
+
+}
+
+function closePerformanceModal(){
+
+    document.getElementById(
+        "performance-modal-container"
+    ).innerHTML="";
+
+}
+function createLearningTrendChart(){
+
+
+const container = document.getElementById(
+    "learningTrendContainer"
+);
+
+
+if(!container){
+
+    console.log("Trend container missing");
+    return;
+
+}
+
+
+
+const trendData = JSON.parse(
+    document.getElementById("trend-data").textContent
+);
+
+
+
+console.log(
+"Chart Data:",
+trendData
+);
+
+
+
+let index = 0;
+
+
+const colors=[
+"#2563eb",
+"#16a34a",
+"#dc2626",
+"#f59e0b",
+"#7c3aed"
+];
+
+
+
+for(const topic in trendData){
+
+
+index++;
+
+
+const card=document.createElement("div");
+
+card.className="chart-card";
+
+
+
+const title=document.createElement("h4");
+
+title.innerText=topic;
+
+
+card.appendChild(title);
+
+
+
+const canvas=document.createElement("canvas");
+
+
+card.appendChild(canvas);
+
+
+container.appendChild(card);
+
+
+
+
+const topicData=trendData[topic];
+
+
+
+new Chart(canvas,{
+
+type:"line",
+
+data:{
+
+
+labels:
+topicData.map(
+(item,i)=>"Attempt "+(i+1)
+),
+
+
+
+datasets:[{
+
+label:topic,
+
+data:
+topicData.map(
+item=>item.score
+),
+
+
+borderWidth:3,
+
+tension:0.35,
+
+pointRadius:5
+
+}]
+
+
+},
+
+
+options:{
+
+
+responsive:true,
+
+maintainAspectRatio:false,
+
+
+scales:{
+
+
+y:{
+
+beginAtZero:true,
+
+max:100
+
+}
+
+
+}
+
+
+}
+
+
+
+});
+
+
+
+}
+
+
+}
 </script>
 </body>
 </html>

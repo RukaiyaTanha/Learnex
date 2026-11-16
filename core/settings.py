@@ -98,6 +98,9 @@ else:
             'PASSWORD': os.getenv('MYSQL_PASSWORD', os.getenv('DB_PASSWORD', 'tanha2003')),
             'HOST': os.getenv('MYSQL_HOST', os.getenv('DB_HOST', '127.0.0.1')),
             'PORT': os.getenv('MYSQL_PORT', os.getenv('DB_PORT', '3306')),
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+            },
         }
     }
 

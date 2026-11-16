@@ -3,7 +3,7 @@ from django.http import JsonResponse,FileResponse
 from django.contrib.auth import get_user_model, authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
-from .models import Course, UserCourse,Topic, Question,Marks,Syllabus, QuizAttendance,TeacherCourseSelection,StudentInfo,Section, TeacherSyllabusUpload, AIQuizAttempt
+from .models import Course, MarksHistory, UserCourse,Topic, Question,Marks,Syllabus, QuizAttendance,TeacherCourseSelection,StudentInfo,Section, TeacherSyllabusUpload, AIQuizAttempt
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
@@ -11,7 +11,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.mail import EmailMultiAlternatives
-from .models import CustomUser
+from .models import CustomUser,TeacherNotification
 from django.urls import reverse
 import json as pyjson
 from difflib import SequenceMatcher
@@ -20,6 +20,7 @@ from django.views.decorators.http import require_POST
 import mimetypes
 from django.db.models import F, Avg
 from django.db import IntegrityError
+from django.db.models.functions import Lower, Trim
 import csv, io, json
 import os
 import pdfplumber
@@ -31,7 +32,6 @@ import openpyxl
 from io import BytesIO
 from django.conf import settings
 from django.contrib import messages
-import google.generativeai as genai
 import markdown2
 from .ai_feedback import generate_ai_feedback
 from django.utils.safestring import mark_safe
@@ -40,8 +40,137 @@ from django.db import transaction
 from collections import defaultdict
 from datetime import timedelta
 from django.utils.timezone import now
+import google.generativeai as genai
+from google.genai import types
+from .utils import check_ai_quiz_decline
+from collections import defaultdict
+from django.db.models import Avg
+from .models import AIQuizAttempt
+
 
 User = get_user_model()
+
+# Starter AIUB course catalog used to backfill missing courses in the database.
+AIUB_COURSE_CATALOG = [
+    ("CSE101", "Introduction to Computer Systems", "Core introductory computing course."),
+    ("CSE102", "Structured Programming", "Programming basics and problem solving."),
+    ("CSE103", "Discrete Mathematics", "Logic, sets, relations, and proofs."),
+    ("CSE104", "Object Oriented Programming", "Classes, objects, inheritance, and design."),
+    ("CSE105", "Data Structures", "Arrays, stacks, queues, trees, and graphs."),
+    ("CSE201", "Algorithms", "Algorithm design, complexity, and analysis."),
+    ("CSE202", "Database Systems", "Relational databases and SQL."),
+    ("CSE203", "Digital Logic Design", "Boolean logic, circuits, and combinational design."),
+    ("CSE204", "Computer Organization", "Processor architecture and memory systems."),
+    ("CSE205", "Operating Systems", "Processes, memory, and file systems."),
+    ("CSE206", "Computer Networks", "Network models, protocols, and communication."),
+    ("CSE207", "Software Engineering", "Requirements, design, testing, and maintenance."),
+    ("CSE208", "Web Technologies", "Frontend and backend web application development."),
+    ("CSE209", "Artificial Intelligence", "Search, reasoning, and intelligent systems."),
+    ("CSE210", "Compiler Design", "Lexing, parsing, and code generation."),
+    ("CSE211", "Microprocessors and Interfacing", "Embedded processor basics and interfacing."),
+    ("CSE212", "Theory of Computation", "Automata, grammars, and computability."),
+    ("CSE213", "Computer Graphics", "2D and 3D graphics fundamentals."),
+    ("CSE214", "System Analysis and Design", "Modeling and designing information systems."),
+    ("CSE215", "Mobile Application Development", "Building applications for mobile platforms."),
+    ("CSE216", "Machine Learning", "Data-driven models and predictive methods."),
+    ("CSE217", "Information Security", "Security principles, threats, and defense."),
+    ("CSE218", "Distributed Systems", "Coordination and communication in distributed computing."),
+    ("CSE219", "Parallel Computing", "Concurrent computation and performance scaling."),
+    ("CSE220", "Human Computer Interaction", "User-centered design and usability."),
+    ("CSE221", "Research Methodology", "Research design, writing, and evaluation."),
+    ("CSE322", "Advanced Database Management", "Database tuning, optimization, and transactions."),
+    ("CSE323", "Cloud Computing", "Virtualized infrastructure and cloud services."),
+    ("CSE324", "Data Mining", "Discovering patterns from structured data."),
+    ("MAT101", "Calculus and Analytical Geometry", "Differential and integral calculus."),
+    ("MAT102", "Linear Algebra", "Vectors, matrices, and linear systems."),
+    ("MAT103", "Differential Equations", "Ordinary differential equations and applications."),
+    ("PHY101", "Physics", "Fundamental mechanics and modern physics."),
+    ("ENG101", "English Language", "Academic writing and communication skills."),
+]
+
+
+def ensure_aiub_courses_exist():
+    existing_codes = set(Course.objects.values_list("code", flat=True))
+    missing_courses = [
+        Course(code=code, name=name, description=description)
+        for code, name, description in AIUB_COURSE_CATALOG
+        if code not in existing_codes
+    ]
+
+    if missing_courses:
+        Course.objects.bulk_create(missing_courses)
+
+
+def get_student_assigned_sections(user):
+    if not user.email:
+        return Section.objects.none()
+
+    email = user.email.strip().lower()
+    return (
+        Section.objects.annotate(student_email_clean=Lower(Trim("students__email")))
+        .filter(student_email_clean=email)
+        .select_related("course")
+        .distinct()
+        .order_by("semester", "course__name", "section_name")
+    )
+
+
+def sync_student_courses_from_teacher_uploads(user):
+    assigned_sections = get_student_assigned_sections(user)
+    assigned_courses = []
+    seen_course_ids = set()
+
+    for section in assigned_sections:
+        if section.course_id in seen_course_ids:
+            continue
+        seen_course_ids.add(section.course_id)
+        assigned_courses.append(section.course)
+
+    for course in assigned_courses:
+        UserCourse.objects.get_or_create(user=user, course=course)
+
+    return assigned_sections
+
+
+def is_teacher(user):
+    return getattr(user, "role", "").lower() == "teacher"
+
+
+def require_teacher_page(request):
+    if is_teacher(request.user):
+        return None
+
+    messages.error(request, "Please log in with a Teacher account to use teacher pages.")
+    return redirect("student_dashboard")
+
+
+def parse_student_info_file(student_file):
+    filename = student_file.name.lower()
+    rows = []
+
+    if filename.endswith(".xlsx"):
+        workbook = openpyxl.load_workbook(BytesIO(student_file.read()), read_only=True, data_only=True)
+        sheet = workbook.active
+        sheet_rows = list(sheet.iter_rows(values_only=True))
+        if not sheet_rows:
+            return rows
+
+        headers = [str(value or "").strip().lower() for value in sheet_rows[0]]
+        for sheet_row in sheet_rows[1:]:
+            row = {
+                headers[index]: "" if value is None else str(value).strip()
+                for index, value in enumerate(sheet_row)
+                if index < len(headers)
+            }
+            rows.append(row)
+        return rows
+
+    decoded_file = student_file.read().decode("utf-8-sig")
+    reader = csv.DictReader(io.StringIO(decoded_file))
+    for row in reader:
+        rows.append({str(key or "").strip().lower(): str(value or "").strip() for key, value in row.items()})
+
+    return rows
 
 # ---------- Registration API ----------
 @csrf_exempt
@@ -153,6 +282,7 @@ def login_page(request):
 @login_required(login_url='/accounts/login-page/')
 def student_dashboard(request):
     user = request.user
+    sync_student_courses_from_teacher_uploads(user)
     context = {
         "username": user.username,
         "role": getattr(user, "role", "N/A"),
@@ -173,6 +303,7 @@ def logout_api(request):
 def save_courses_api(request):
     if request.method == "POST":
         try:
+            ensure_aiub_courses_exist()
             data = json.loads(request.body)
             selected_codes = data.get("courses", [])
             if not isinstance(selected_codes, list):
@@ -210,31 +341,37 @@ def save_courses_api(request):
 @login_required(login_url='/accounts/login-page/')
 def course_selection_page(request):
     user = request.user
-    _ensure_course_catalog_loaded()
-    courses = Course.objects.order_by("name")
-    user_courses_qs = UserCourse.objects.filter(user=user).values_list('course__code', flat=True)
-    user_courses = list(user_courses_qs)
+    ensure_aiub_courses_exist()
+    assigned_sections = sync_student_courses_from_teacher_uploads(user)
+    assigned_courses = []
+    for section in assigned_sections:
+        assigned_courses.append({
+            "course": section.course,
+            "semester": section.semester,
+            "section": section.section_name,
+            "teacher": section.teacher,
+        })
 
     context = {
-        "courses": courses,
-        "user_courses": user_courses,                    
-        "user_courses_json": pyjson.dumps(user_courses),  
         "username": user.username,
+        "assigned_courses": assigned_courses,
     }
     return render(request, "accounts/course_selection.html", context)
 
 @login_required(login_url='/accounts/login-page/')
 def selected_courses_page(request):
-    user_courses = UserCourse.objects.filter(user=request.user).select_related('course')
+    assigned_sections = sync_student_courses_from_teacher_uploads(request.user)
     return render(request, 'accounts/selected_courses.html', {
         'username': request.user.username,
-        'user_courses': user_courses,
+        'assigned_sections': assigned_sections,
     })
 
 # ---------- Quiz Selection ----------
 @login_required(login_url='/accounts/login-page/')
 def quiz_selection_page(request):
     user = request.user
+    ensure_aiub_courses_exist()
+    sync_student_courses_from_teacher_uploads(user)
     enrolled_courses = Course.objects.filter(usercourse__user=user)
 
     course_topics = {str(course.id): [{"id": t.id, "name": t.name} for t in course.topics.all()] for course in enrolled_courses}
@@ -359,31 +496,51 @@ def reset_password_api(request):
             return JsonResponse({"success": False, "message": "Invalid or expired link"})
 
     return JsonResponse({"success": False, "message": "Invalid request"})
-
+#profile page
 @login_required(login_url='/accounts/login-page/')
 def profile_page(request):
     user = request.user
+
+    role = getattr(user, "role", "N/A")
+
+    if role.lower() == "teacher":
+        dashboard_url = "teacher_dashboard"
+    else:
+        dashboard_url = "student_dashboard"
+
     context = {
         "username": user.username,
         "first_name": user.first_name,
         "last_name": user.last_name,
-        "role": getattr(user, "role", "N/A"),
+        "role": role,
         "email": user.email,
         "date_joined": user.date_joined,
+        "dashboard_url": dashboard_url,
     }
+
     return render(request, "accounts/profile.html", context)
 
 # ---------- Edit Profile Page ----------
 @login_required(login_url='/accounts/login-page/')
 def profile_edit(request):
     user = request.user
+
+    role = getattr(user, "role", "N/A")
+
+    if role.lower() == "teacher":
+        dashboard_url = "teacher_dashboard"
+    else:
+        dashboard_url = "student_dashboard"
+
     context = {
         "username": user.username,
         "first_name": user.first_name,
         "last_name": user.last_name,
         "email": user.email,
-        "role": getattr(user, "role", "N/A"),
+        "role": role,
+        "dashboard_url": dashboard_url,
     }
+
     return render(request, "accounts/profile_edit.html", context)
 
 # ---------- Update Profile API ----------
@@ -865,99 +1022,31 @@ def view_syllabus(request, pk):
 def calculate_cgpa_page(request):
     return render(request, 'accounts/calculate_cgpa.html')
 
-# overall performance
-'''
-@login_required(login_url='/accounts/login-page/')
-def overall_performance(request):
-    user = request.user
-
-    student_marks = Marks.objects.filter(student=user)
-
-    if not student_marks.exists():
-        context = {
-            "completed_quizzes": 0,
-            "performance_rate": 0,
-            "improvement_rate": 0,
-            "predicted_performance": 0,
-            "courses": [],
-            "attendance_by_course": {},
-        }
-        return render(request, "accounts/overall_performance.html", context)
-
-    completed_quizzes = 0
-    for mark in student_marks:
-        completed_quizzes += sum(1 for q in [mark.quiz1, mark.quiz2, mark.quiz3] if q > 0)
-
-    avg_total_score = (
-        student_marks.aggregate(
-            avg=Avg(
-                (F('quiz1') + F('quiz2') + F('quiz3') +
-                 F('attendance') + F('assignment') + F('presentation') + F('termexam')) / 7
-            )
-        )["avg"] or 0
-    )
-    performance_rate = round(avg_total_score, 2)
-
-    marks_sorted = student_marks.order_by('uploaded_at')
-    if marks_sorted.count() >= 2:
-        first_score = (marks_sorted.first().quiz1 + marks_sorted.first().quiz2 + marks_sorted.first().quiz3) / 3
-        last_score = (marks_sorted.last().quiz1 + marks_sorted.last().quiz2 + marks_sorted.last().quiz3) / 3
-        improvement_rate = round(last_score - first_score, 2)
-    else:
-        improvement_rate = 0
-
-    courses = []
-    attendance_by_course = {}
-
-    for mark in student_marks:
-        total = (mark.quiz1 + mark.quiz2 + mark.quiz3 +
-                 mark.attendance + mark.assignment + mark.presentation + mark.termexam) / 7
-        courses.append({
-            "name": mark.course.name,
-            "performance": round(total, 2)
-        })
-
-        course_attendance = QuizAttendance.objects.filter(student=user, course=mark.course)
-        attendance_by_course[mark.course.name] = {}
-
-        for week in range(1, 5):
-            attended = course_attendance.filter(week=week, attended=True).exists()
-            attendance_by_course[mark.course.name][f"Week {week}"] = "✔️" if attended else "❌"
-
-    if performance_rate < 60:
-        predicted_performance = round(performance_rate + 10, 2)
-    elif performance_rate < 80:
-        predicted_performance = round(performance_rate + 5, 2)
-    else:
-        predicted_performance = round(performance_rate + 2, 2)
-
-    courses_json = json.dumps(courses)
-    context = {
-        "completed_quizzes": completed_quizzes,
-        "performance_rate": performance_rate,
-        "improvement_rate": improvement_rate,
-        "predicted_performance": predicted_performance,
-        "courses_json": courses_json,  
-        "attendance_by_course": attendance_by_course,
-    }
-    return render(request, "accounts/overall_performance.html", context)
-'''
 #------------ai overall feedback + performance-----------
-def generate_overall_ai_feedback(courses, performance_rate):
+def generate_overall_ai_feedback(courses, performance_rate, weak_topics=None, average_ai_score=None):
     try:
         course_lines = "\n".join([f"{c['name']}: {c['performance']}%" for c in courses])
+
+        weak_topics = weak_topics or []
+        weak_topics_lines = "\n".join(
+        [f"{w['topic']}: {w['average']}%" for w in weak_topics]
+    ) or "None"
 
         prompt = f"""
 You are an academic performance advisor.
 
-Student overall performance: {performance_rate}%
+Student overall offline performance: {performance_rate}%
+Student AI quiz average: {average_ai_score}%
 
-Course-wise performance data:
+Course-wise offline performance:
 {course_lines}
 
+Weak topics detected from AI quizzes (below 50%):
+{weak_topics_lines}
+
 Tasks:
-1. Identify courses that need the most attention (below 60%).
-2. Give short, practical improvement advice.
+1. Identify courses that need attention (offline performance below 60%) AND any topics listed under "Weak topics detected from AI quizzes" below 50%.
+2. Give short, practical improvement advice based on both offline performance and weak AI quiz topics.
 3. Predict achievable performance percentage if the student improves steadily.
 4. End with a short motivational line.
 
@@ -982,7 +1071,7 @@ Motivation:
 - ...
 """
 
-        model = genai.GenerativeModel("gemini-2.5-flash-lite-preview-09-2025")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         response = model.generate_content(prompt)
 
         try:
@@ -1001,7 +1090,7 @@ Motivation:
             "Motivation:\n"
             "- Keep going strong."
         )
-
+#-------------------
 from datetime import timedelta
 from django.utils.timezone import now
 from django.db.models import Avg, F
@@ -1012,136 +1101,237 @@ import json
 def overall_performance(request):
     user = request.user
 
+    # ==============================
+    # Teacher Marks Data
+    # ==============================
+
     student_marks = Marks.objects.filter(student=user)
 
-    if not student_marks.exists():
-        context = {
-            "student": user,
-            "completed_quizzes": 0,
-            "performance_rate": 0,
-            "improvement_rate": 0,
-            "predicted_performance": 0,
-            "courses": [],
-            "courses_json": "[]",
-            "attendance_by_course": {},
-            "attendance_json": "{}",
-            "ai_overall_feedback": "No AI feedback available yet. Add some marks first.",
-        }
-        return render(request, "accounts/overall_performance.html", context)
-
-    completed_quizzes = 0
-    for mark in student_marks:
-        completed_quizzes += sum(
-            1 for q in [mark.quiz1, mark.quiz2, mark.quiz3] if q > 0
-        )
-
-    avg_total_score = (
-        student_marks.aggregate(
-            avg=Avg(
-                (F('quiz1') + F('quiz2') + F('quiz3') +
-                 F('attendance') + F('assignment') +
-                 F('presentation') + F('termexam')) / 7
-            )
-        )["avg"] or 0
-    )
-    performance_rate = round(avg_total_score, 2)
-
-    marks_sorted = student_marks.order_by('uploaded_at')
-    if marks_sorted.count() >= 2:
-        first_score = (
-            marks_sorted.first().quiz1 +
-            marks_sorted.first().quiz2 +
-            marks_sorted.first().quiz3
-        ) / 3
-        last_score = (
-            marks_sorted.last().quiz1 +
-            marks_sorted.last().quiz2 +
-            marks_sorted.last().quiz3
-        ) / 3
-        improvement_rate = round(last_score - first_score, 2)
-    else:
-        improvement_rate = 0
-
+    marks_data = []
     courses = []
-    attendance_by_course = {}
 
-    # ---- FIXED PART STARTS HERE ----
-
-    all_courses = Course.objects.all()
-
-    for course in all_courses:
-        attendance_by_course[course.name] = {
-            "Week 1": 0,
-            "Week 2": 0,
-            "Week 3": 0,
-            "Week 4": 0,
-        }
-
-        attempts = AIQuizAttempt.objects.filter(
-            student=user,
-            course=course
-        )
-
-        for attempt in attempts:
-            day = attempt.created_at.day
-
-            if day <= 7:
-                week = "Week 1"
-            elif day <= 14:
-                week = "Week 2"
-            elif day <= 21:
-                week = "Week 3"
-            else:
-                week = "Week 4"
-
-            attendance_by_course[course.name][week] = 1
-
-    # ---- FIXED PART ENDS HERE ----
+    total_course_scores = []
 
     for mark in student_marks:
-        total = (
-            mark.quiz1 + mark.quiz2 + mark.quiz3 +
-            mark.attendance + mark.assignment +
-            mark.presentation + mark.termexam
-        ) / 7
+
+        course_total = (
+            mark.quiz1 +
+            mark.quiz2 +
+            mark.quiz3 +
+            mark.attendance +
+            mark.assignment +
+            mark.presentation +
+            mark.termexam
+        )
+
+        course_total = round(course_total, 2)
+
+        total_course_scores.append(course_total)
+
+        quiz_average = ((mark.quiz1 + mark.quiz2 + mark.quiz3) / 30) * 100
+
+
+        marks_data.append({
+            "course": mark.course,
+            "quiz_average": round(quiz_average, 2),
+            "assignment": round((mark.assignment / 10) * 100, 2),
+            "presentation": round((mark.presentation / 10) * 100, 2),
+            "termexam": round((mark.termexam / 40) * 100, 2),
+            "total": course_total,
+        })
+
 
         courses.append({
             "name": mark.course.name,
-            "performance": round(total, 2)
+            "performance": course_total
         })
 
-    try:
-        ai_overall_feedback = generate_overall_ai_feedback(
-            courses, performance_rate
-        ) or "No AI feedback available."
-    except Exception:
-        ai_overall_feedback = "No AI feedback available."
 
-    if performance_rate < 60:
-        predicted_performance = round(performance_rate + 10, 2)
-    elif performance_rate < 80:
-        predicted_performance = round(performance_rate + 5, 2)
+    # Overall academic score
+    if total_course_scores:
+        performance_rate = round(
+            sum(total_course_scores) / len(total_course_scores),
+            2
+        )
     else:
-        predicted_performance = round(performance_rate + 2, 2)
+        performance_rate = 0
+    # ==============================
+    # AI Quiz Data
+    # ==============================
 
+    ai_attempts = AIQuizAttempt.objects.filter(
+        student=user
+    ).order_by("created_at")
+
+    ai_quiz_attempts = ai_attempts.count()
+
+    ai_scores = []
+
+    for quiz in ai_attempts:
+
+        if quiz.max_score > 0:
+
+            percentage = (
+                quiz.score /
+                quiz.max_score
+            ) * 100
+
+            ai_scores.append(round(percentage, 2))
+
+    if ai_scores:
+
+        average_ai_score = round(
+            sum(ai_scores) / len(ai_scores),
+            2
+        )
+
+    else:
+        average_ai_score = 0
+
+    # ==============================
+    # Offline Improvement
+    # ==============================
+    offline_improvement = 0
+
+    if student_marks.count() >= 2:
+
+        first = student_marks.order_by(
+            "uploaded_at"
+        ).first()
+
+        last = student_marks.order_by(
+            "uploaded_at"
+        ).last()
+
+        first_quiz = (
+            first.quiz1 +
+            first.quiz2 +
+            first.quiz3
+        ) / 3
+
+        last_quiz = (
+            last.quiz1 +
+            last.quiz2 +
+            last.quiz3
+        ) / 3
+
+        offline_improvement = round(
+            last_quiz - first_quiz,
+            2
+        )
+    # ==============================
+    # AI Quiz Improvement
+    # ==============================
+    ai_improvement = 0
+
+    if len(ai_scores) >= 6:
+
+        first_average = sum(
+            ai_scores[:3]
+        ) / 3
+
+        latest_average = sum(
+            ai_scores[-3:]
+        ) / 3
+
+        ai_improvement = round(
+            latest_average - first_average,
+            2
+        )
+
+    # ==============================
+    # Weak Topic Detection
+    # ==============================
+
+    topic_scores = defaultdict(list)
+    student_ai_attempts = AIQuizAttempt.objects.filter(
+    student=user
+    )
+    
+    for attempt in student_ai_attempts:
+        topic = attempt.topic_name if attempt.topic_name else "General"
+        topic_scores[topic].append(
+            attempt.percentage()
+            )
+        
+        weak_topics = []
+        
+    for topic, scores in topic_scores.items():
+        average = round(
+            sum(scores) / len(scores),
+            2
+        )
+            
+        if average < 50:
+            weak_topics.append({
+                "topic": topic,
+                "average": average
+            })
+    # ==============================
+    # AI Feedback
+    # ==============================
+
+    try:
+
+        ai_overall_feedback = generate_overall_ai_feedback(
+            courses,
+            performance_rate,
+            weak_topics=weak_topics,
+            average_ai_score=average_ai_score
+        )
+
+    except Exception:
+
+        ai_overall_feedback = (
+            "Focus Areas:\n"
+            "- Continue practicing regularly.\n\n"
+            "Improvement Advice:\n"
+            "- Review weak topics.\n\n"
+            "Prediction:\n"
+            "- Keep improving steadily.\n\n"
+            "Motivation:\n"
+            "- Good effort, keep going."
+        )
+    # ==============================
+    # Recent AI Quiz History
+    # ==============================
+
+    recent_quizzes = AIQuizAttempt.objects.filter(
+        student=user
+    ).order_by(
+        "-created_at"
+    )[:10]
+
+    # ==============================
+    # Chart Data
+    # ==============================
     courses_json = json.dumps(courses)
-    attendance_json = json.dumps(attendance_by_course)
 
     context = {
         "student": user,
-        "completed_quizzes": completed_quizzes,
+        # Cards
         "performance_rate": performance_rate,
-        "improvement_rate": improvement_rate,
-        "predicted_performance": predicted_performance,
+        "ai_quiz_attempts": ai_quiz_attempts,
+        "average_ai_score": average_ai_score,
+        "offline_improvement": offline_improvement,
+        "ai_improvement": ai_improvement,
+        "weak_topics": weak_topics,
+        # Tables
+        "marks_data": marks_data,
+        "recent_quizzes": recent_quizzes,
+        # Chart
         "courses": courses,
         "courses_json": courses_json,
-        "attendance_by_course": attendance_by_course,
-        "attendance_json": attendance_json,
+        # AI
         "ai_overall_feedback": ai_overall_feedback,
     }
 
-    return render(request, "accounts/overall_performance.html", context)
 
+    return render(
+        request,
+        "accounts/overall_performance.html",
+        context
+    )
 # AIUB grade points mapping
 GRADE_POINTS = {
     "A+": 4.00,
@@ -1184,8 +1374,6 @@ def current_semester_cg(request):
     })
 
 # -------------- File extraction functions --------------------
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-
 def extract_text_from_pdf(file_path):
     """
     Extract text from a PDF file.
@@ -1319,7 +1507,7 @@ Conversation so far:
             full_prompt += f"user: {user_prompt}"
 
             try:
-                model = genai.GenerativeModel("gemini-2.5-flash-lite-preview-09-2025")
+                model = genai.GenerativeModel("gemini-2.5-flash")
                 result = model.generate_content(full_prompt)
                 ai_raw_response = result.text
                 ai_response = markdown2.markdown(
@@ -1374,6 +1562,7 @@ def get_course_syllabus_text(course, user, filename=None):
 # AI Quiz Page
 @login_required(login_url='/accounts/login-page/')
 def ai_quiz_page(request):
+    sync_student_courses_from_teacher_uploads(request.user)
     courses = Course.objects.filter(usercourse__user=request.user)
     topics = Syllabus.objects.filter(user=request.user).values_list("lecture_slide", flat=True).distinct()
     topics = [os.path.basename(t) for t in topics if t]
@@ -1438,7 +1627,7 @@ SYLLABUS CONTENT:
 """
 
     try:
-        model = genai.GenerativeModel("gemini-2.5-flash-lite-preview-09-2025")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         response = model.generate_content(prompt)
 
         raw = response.text.strip()
@@ -1455,41 +1644,247 @@ SYLLABUS CONTENT:
             "status": "error",
             "message": str(e)
         })
-
     
-'''
-@login_required(login_url='/accounts/login-page/')
-def submit_ai_quiz(request):
-    data = json.loads(request.body)
-    total = 0
-    max_total = 0
+#------------------------------     
+from .models import (
+    AIQuizAttempt,
+    TeacherNotification,
+    Section
+)
 
-    for q in data.get("questions", []):
-        marks = q.get("marks", 1)
-        max_total += marks
-        if q.get("student_answer") == q.get("correct_answer"):
-            total += marks
+def check_ai_quiz_decline(student, course):
 
-    AIQuizAttempt.objects.create(
-        student=request.user,
-        course_id=data.get("course_id"),
-        topic_name=data.get("topic_name"),
-        score=total,
-        max_score=max_total
+    # ==========================
+    # Last 3 AI Quiz Attempts
+    # ==========================
+
+    attempts = AIQuizAttempt.objects.filter(
+        student=student,
+        course=course
+    ).order_by('-created_at')[:3]
+
+
+    if attempts.count() < 3:
+        return
+
+
+    scores = [
+        attempt.percentage()
+        for attempt in reversed(attempts)
+    ]
+
+
+    print("LAST 3 SCORES:", scores)
+
+
+    # ==========================
+    # Rule 1: Continuous Decline
+    # Example: 100, 80, 60
+    # ==========================
+
+    continuous_decline = (
+        scores[0] > scores[1] > scores[2]
     )
 
-    return JsonResponse({
-        "status": "success",
-        "total_marks": total,
-        "max_marks": max_total
-    })
-'''
+
+    # ==========================
+    # Rule 2: Critical Failure
+    # Example: 60, 0, 0
+    # ==========================
+
+    critical_failure = (
+        scores[1] == 0 and
+        scores[2] == 0
+    )
+
+
+    # ==========================
+    # Rule 3: Last 5 Quiz Average
+    # ==========================
+
+    last_five_attempts = AIQuizAttempt.objects.filter(
+        student=student,
+        course=course
+    ).order_by('-created_at')[:5]
+
+
+    last_five_scores = [
+        attempt.percentage()
+        for attempt in reversed(last_five_attempts)
+    ]
+
+
+    low_average = False
+    average = 0
+
+
+    if len(last_five_scores) == 5:
+
+        average = round(
+            sum(last_five_scores) / 5,
+            2
+        )
+
+        if average < 40:
+            low_average = True
+
+    # ==========================
+    # Rule 4: Sudden Performance Drop
+    # ==========================
+
+    sudden_drop = False
+    previous_average = 0
+    current_score = scores[-1]
+
+    all_attempts = AIQuizAttempt.objects.filter(
+        student=student,
+        course=course
+        ).order_by(
+            'created_at'
+        )
+
+
+    if all_attempts.count() >= 4:
+        all_attempts = list(all_attempts)
+        previous_scores = [
+            attempt.percentage()
+            for attempt in all_attempts[:-1]
+        ]
+
+        previous_average = round(
+            sum(previous_scores) /
+            len(previous_scores),
+            2
+        )
+
+        drop_difference = (previous_average - current_score)
+        
+        if drop_difference > 30:
+            sudden_drop = True
+
+    # ==========================
+    # If no risk detected
+    # ==========================
+
+    if not (
+        continuous_decline
+        or critical_failure
+        or low_average
+        or sudden_drop
+    ):
+        return
+
+    # ==========================
+    # Find Teacher
+    # ==========================
+
+    section = Section.objects.filter(
+        course=course,
+        section_name="A"
+    ).first()
+
+    if not section:
+
+        print("No section found")
+        return
+
+    teacher = section.teacher
+
+    # ==========================
+    # Alert Reason
+    # ==========================
+
+    reason = ""
+
+    if continuous_decline:
+
+        reason += (
+            "Continuous score decline detected.\n"
+        )
+
+    if critical_failure:
+
+        reason += (
+            "Two consecutive zero-score attempts detected.\n"
+        )
+
+    if low_average:
+
+        reason += (
+            f"Average of last five quizzes is {average}% "
+            "which is below 40%.\n"
+        )
+
+    if sudden_drop:
+
+        reason += (
+            f"Sudden performance drop detected. "
+            f"Previous average: {previous_average}%, "
+            f"Current score: {current_score}%.\n"
+        )
+    # ==========================
+    # Prevent Duplicate Alert
+    # ==========================
+
+    existing_alert = TeacherNotification.objects.filter(
+        teacher=teacher,
+        student=student,
+        course=course,
+        resolved=False
+    ).exists()
+
+    if existing_alert:
+
+        print("Alert already exists")
+        return
+    # ==========================
+    # Risk Classification
+    # ==========================
+
+    risk_level = "Low Risk"
+    
+    if (
+        critical_failure
+        or low_average
+    ):
+        risk_level = "High Risk"
+        
+    elif (
+        continuous_decline
+        or sudden_drop
+    ):
+        risk_level = "Medium Risk"
+        
+    # ==========================
+    # Create Notification
+    # ==========================
+
+    TeacherNotification.objects.create(
+        teacher=teacher,
+        student=student,
+        course=course,
+        semester=section.semester,
+        section=section.section_name,
+        title="Performance Alert",
+        message=(
+            f"Recent AI quiz scores:\n"
+            f"{scores[0]}%, {scores[1]}%, {scores[2]}%\n\n"
+            f"Alert Reason:\n"
+            f"{reason}\n"
+            "Please review the student's progress "
+            "and provide guidance."
+        )
+    )
+
+    print("Teacher notification created")
+#------------------------------
 @login_required(login_url='/accounts/login-page/')
 def submit_ai_quiz(request):
     data = json.loads(request.body)
     total = 0
     max_total = 0
     detailed_feedback = []
+    evaluation_data = []
     syllabus_cache = {} 
 
     for q in data.get("questions", []):
@@ -1526,21 +1921,40 @@ def submit_ai_quiz(request):
             "is_correct": is_correct,
             "explanation": explanation
         })
-
-    AIQuizAttempt.objects.create(
+        evaluation_data.append({
+            "topic": filename,
+            "question": q.get("question_text"),
+            "student_answer": student_answer,
+            "correct_answer": correct_answer,
+            "status": "Correct" if is_correct else "Wrong"
+            })     
+        
+    attempt = AIQuizAttempt.objects.create(
         student=request.user,
         course_id=data.get("course_id"),
         topic_name=data.get("topic_name"),
         score=total,
         max_score=max_total
+        )
+# Check performance decline
+    check_ai_quiz_decline(
+        request.user,
+        attempt.course
     )
 
+    from .ai_feedback import generate_performance_feedback
+    
+    ai_feedback = generate_performance_feedback(
+        evaluation_data
+        )
+
     return JsonResponse({
-        "status": "success",
-        "total_marks": total,
-        "max_marks": max_total,
-        "detailed_feedback": detailed_feedback
-    })
+         "status":"success",
+         "total_marks":total,
+         "max_marks":max_total,
+         "detailed_feedback":detailed_feedback,
+         "ai_feedback":ai_feedback
+})
 
 #progress
 @login_required(login_url='/accounts/login-page/')
@@ -1553,6 +1967,24 @@ def student_progress(request):
 
     progress_data = defaultdict(lambda: defaultdict(list))
 
+    weak_topics = []
+    
+    for course in Course.objects.filter(
+        aiquizattempt__student=student
+        ).distinct():
+        
+        result = detect_weak_topics(
+            student,
+            course
+        )
+        
+        for item in result:
+            weak_topics.append({
+                "course": course.name,
+                "topic": item["topic"],
+                "average": item["average"]
+            })
+
     for attempt in attempts:
         course = attempt.course.name
         topic = attempt.topic_name if attempt.topic_name else "General"
@@ -1564,27 +1996,40 @@ def student_progress(request):
 
     context = {
         "username": student.username,
-        "progress_json": json.dumps(progress_data)
+        "progress_json": json.dumps(progress_data),
+        "weak_topics": weak_topics
     }
 
     return render(request, "accounts/student_progress.html", context)
-#-----------------------------TEACHER--------------------------------------------
-#-----------------------------TEACHER--------------------------------------------
+
 # teacher Dashboard page (protected)
 @login_required(login_url='/accounts/login-page/')
 def teacher_dashboard(request):
+    teacher_redirect = require_teacher_page(request)
+    if teacher_redirect:
+        return teacher_redirect
+
     user = request.user
+    unread_alerts_count = TeacherNotification.objects.filter(
+        teacher=user, is_read=False
+    ).count()
+
     context = {
         "username": user.username,
         "role": getattr(user, "role", "N/A"),
+        "unread_alerts_count": unread_alerts_count,
     }
     return render(request, "accounts/teacher_dashboard.html", context)
 
 # ---------- Teacher Course Selection Page ----------
 @login_required(login_url='/accounts/login-page/')
 def teacher_course_selection_page(request):
+    teacher_redirect = require_teacher_page(request)
+    if teacher_redirect:
+        return teacher_redirect
+
     user = request.user
-    _ensure_course_catalog_loaded()
+    ensure_aiub_courses_exist()
     courses = Course.objects.order_by("name")
 
     selections = TeacherCourseSelection.objects.filter(teacher=user)
@@ -1617,8 +2062,12 @@ def _ensure_course_catalog_loaded():
 @csrf_exempt
 @login_required(login_url='/accounts/login-page/')
 def save_teacher_courses_api(request):
+    if not is_teacher(request.user):
+        return JsonResponse({"success": False, "message": "Please log in with a Teacher account."}, status=403)
+
     if request.method == "POST":
         try:
+            ensure_aiub_courses_exist()
             data = json.loads(request.body)
             semester = data.get("semester")
             selected_codes = data.get("courses", [])
@@ -1648,6 +2097,10 @@ def save_teacher_courses_api(request):
 
 @login_required(login_url='/accounts/login-page/')
 def teacher_selected_courses_page(request):
+    teacher_redirect = require_teacher_page(request)
+    if teacher_redirect:
+        return teacher_redirect
+
     user = request.user
     selections = TeacherCourseSelection.objects.filter(teacher=user)
     return render(request, "accounts/teacher_selected_courses.html", {
@@ -1657,6 +2110,10 @@ def teacher_selected_courses_page(request):
 #----------------------
 @login_required(login_url='/accounts/login-page/')
 def upload_student_info_page(request):
+    teacher_redirect = require_teacher_page(request)
+    if teacher_redirect:
+        return teacher_redirect
+
     user = request.user
     selections = TeacherCourseSelection.objects.filter(teacher=user)
 
@@ -1669,9 +2126,9 @@ def upload_student_info_page(request):
         semester = request.POST.get('semester')
         course_name = request.POST.get('course')
         section_name = request.POST.get('section')
-        csv_file = request.FILES.get('studentFile')
+        student_file = request.FILES.get('studentFile')
 
-        if not (semester and course_name and section_name and csv_file):
+        if not (semester and course_name and section_name and student_file):
             messages.error(request, "All fields are required!")
             return redirect('upload_student_info_page')
 
@@ -1681,39 +2138,48 @@ def upload_student_info_page(request):
             messages.error(request, f"Course '{course_name}' not found!")
             return redirect('upload_student_info_page')
 
-        section_obj, _ = Section.objects.get_or_create(
-            teacher=user,
-            semester=semester,
-            course=course_obj,
-            section_name=section_name
-        )
-
-        section_obj.students.all().delete()
         try:
-            decoded_file = csv_file.read().decode('utf-8')
-            io_string = io.StringIO(decoded_file)
-            reader = csv.DictReader(io_string)
+            parsed_rows = parse_student_info_file(student_file)
+            student_rows = []
+            skipped = 0
 
-            count = 0
-            for row in reader:
-                student_name = row.get('student_name') or row.get('name')
-                student_id = row.get('student_id')
-                email = row.get('email')
-
+            for row in parsed_rows:
+                student_name = (row.get('student_name') or row.get('name') or "").strip()
+                student_id = (row.get('student_id') or row.get('id') or "").strip()
+                email = (row.get('email') or row.get('student_email') or "").strip().lower()
                 if not student_name or not student_id or not email:
+                    skipped += 1
                     continue  
 
-                StudentInfo.objects.create(
-                    section=section_obj,
-                    student_name=student_name,
-                    student_id=student_id,
-                    email=email
+                student_rows.append({
+                    "student_name": student_name,
+                    "student_id": student_id,
+                    "email": email,
+                })
+
+            if not student_rows:
+                messages.error(
+                    request,
+                    "No valid students found. Use columns: student_name, student_id, email."
                 )
-                count += 1
+                return redirect('upload_student_info_page')
+
+            with transaction.atomic():
+                section_obj, _ = Section.objects.get_or_create(
+                    teacher=user,
+                    semester=semester,
+                    course=course_obj,
+                    section_name=section_name
+                )
+                section_obj.students.all().delete()
+                StudentInfo.objects.bulk_create([
+                    StudentInfo(section=section_obj, **student_row)
+                    for student_row in student_rows
+                ])
 
             messages.success(
                 request,
-                f"Successfully replaced and uploaded {count} students for {course_name} ({section_name}) - {semester}."
+                f"Successfully replaced and uploaded {len(student_rows)} students for {course_name} ({section_name}) - {semester}. Skipped {skipped} invalid row(s)."
             )
             return redirect('upload_student_info_page')
 
@@ -1721,19 +2187,42 @@ def upload_student_info_page(request):
             messages.error(request, f"Error processing CSV file: {str(e)}")
             return redirect('upload_student_info_page')
 
+    from collections import defaultdict
+    
+    semester_course_sections = defaultdict(dict)
+    sections = Section.objects.filter(
+        teacher=user
+        ).select_related("course")
+    
+    for section in sections:
+        semester = section.semester
+        course = section.course.name
+        semester_course_sections.setdefault(semester, {})
+        semester_course_sections[semester].setdefault(course, [])
+        semester_course_sections[semester][course].append(section.section_name)
+
     context = {
         "username": user.username,
         "semester_courses_dict": semester_courses_dict,
         "semester_courses_json": json.dumps(semester_courses_dict),  
-        "section_choices": ["A", "B", "C", "D", "E", "F"],
+        "semester_course_sections_json": json.dumps(semester_course_sections),
     }
     return render(request, "accounts/upload_student_info.html", context)
 
 @login_required(login_url='/accounts/login-page/')
 def uploaded_students_page(request):
+    teacher_redirect = require_teacher_page(request)
+    if teacher_redirect:
+        return teacher_redirect
+
     user = request.user
 
-    sections = Section.objects.filter(teacher=user).order_by('semester', 'course__name', 'section_name')
+    sections = (
+        Section.objects.filter(teacher=user)
+        .select_related('course')
+        .prefetch_related('students')
+        .order_by('semester', 'course__name', 'section_name')
+    )
 
     data = {}
     for section in sections:
@@ -1757,6 +2246,10 @@ def uploaded_students_page(request):
 
 @login_required(login_url='/accounts/login-page/')
 def delete_section(request):
+    teacher_redirect = require_teacher_page(request)
+    if teacher_redirect:
+        return teacher_redirect
+
     if request.method == "POST":
         user = request.user
         semester = request.POST.get('semester')
@@ -1830,12 +2323,32 @@ def teacher_post_marks_page(request):
             updated = 0
             from django.contrib.auth import get_user_model
             User = get_user_model()
-            Marks.objects.filter(
+            old_marks = Marks.objects.filter(
                 course=course_obj,
                 semester=semester,
-                section=section_name,
-                course__section__teacher=user
-            ).delete()
+                section=section_name
+                )
+            
+            # Save old marks into history before deleting
+            for old_mark in old_marks:
+                MarksHistory.objects.create(
+                    student=old_mark.student,
+                    course=old_mark.course,
+                    quiz1=old_mark.quiz1,
+                    quiz2=old_mark.quiz2,
+                    quiz3=old_mark.quiz3,
+
+                    attendance=old_mark.attendance,
+                    assignment=old_mark.assignment,
+                    presentation=old_mark.presentation,
+                    termexam=old_mark.termexam,
+
+                    semester=old_mark.semester,
+                    section=old_mark.section
+                )
+
+            # Now remove old marks
+            old_marks.delete()
 
             with transaction.atomic():
                 for row in reader:
@@ -1902,12 +2415,26 @@ def teacher_post_marks_page(request):
         except Exception as e:
             messages.error(request, f"Error processing CSV: {str(e)}")
             return redirect('teacher_post_marks_page')
+        
+    from collections import defaultdict
+    
+    semester_course_sections = defaultdict(dict)
+    sections = Section.objects.filter(
+        teacher=user
+        ).select_related("course")
+    
+    for section in sections:
+        semester = section.semester
+        course = section.course.name
+        semester_course_sections.setdefault(semester, {})
+        semester_course_sections[semester].setdefault(course, [])
+        semester_course_sections[semester][course].append(section.section_name)
 
     context = {
         "username": user.username,
         "semester_courses_dict": semester_courses_dict,
         "semester_courses_json": json.dumps(semester_courses_dict),
-        "section_choices": section_choices,
+        "semester_course_sections_json": json.dumps(semester_course_sections),
     }
     return render(request, 'accounts/teacher_post_marks.html', context)
 
@@ -2018,132 +2545,191 @@ def teacher_uploaded_marks_page(request):
     }
 
     return render(request, 'accounts/teacher_published_marks.html', context)
-#
+#----------------------
 @login_required(login_url='/accounts/login-page/')
 def teacher_view_performance(request):
-    user = request.user
-    sections = Section.objects.filter(teacher=user).order_by(
-        'semester', 'course__name', 'section_name'
+
+    sections = Section.objects.filter(
+        teacher=request.user
+    ).order_by(
+        'semester',
+        'course__name',
+        'section_name'
     )
-    students_map = {}
-
-    for section in sections:
-        for student_info in section.students.all():
-
-            student_user = User.objects.filter(email=student_info.email).first()
-            if not student_user:
-                continue
-
-            student_marks = Marks.objects.filter(student=student_user).select_related(
-                'course'
-            ).order_by('uploaded_at')
-
-            completed_quizzes = 0
-            performance_rate = 0
-            improvement_rate = 0
-            predicted_performance = 0
-            courses_list = []
-            attendance_by_course = {}
-
-            if student_marks.exists():
-                completed_quizzes = sum(
-                    1
-                    for m in student_marks
-                    for q in [m.quiz1, m.quiz2, m.quiz3]
-                    if (q is not None and q > 0)
-                )
-                totals = []
-                for m in student_marks:
-                    row_total = (
-                        (m.quiz1 or 0)
-                        + (m.quiz2 or 0)
-                        + (m.quiz3 or 0)
-                        + (m.attendance or 0)
-                        + (m.assignment or 0)
-                        + (m.presentation or 0)
-                        + (m.termexam or 0)
-                    ) / 7
-                    totals.append(row_total)
-
-                performance_rate = round(sum(totals) / len(totals), 2) if totals else 0
-                if student_marks.count() >= 2:
-                    first = student_marks.first()
-                    last = student_marks.last()
-                    first_avg = (
-                        (first.quiz1 or 0)
-                        + (first.quiz2 or 0)
-                        + (first.quiz3 or 0)
-                    ) / 3
-                    last_avg = (
-                        (last.quiz1 or 0)
-                        + (last.quiz2 or 0)
-                        + (last.quiz3 or 0)
-                    ) / 3
-                    improvement_rate = round(last_avg - first_avg, 2)
-
-                if performance_rate < 60:
-                    predicted_performance = round(performance_rate + 10, 2)
-                elif performance_rate < 80:
-                    predicted_performance = round(performance_rate + 5, 2)
-                else:
-                    predicted_performance = round(performance_rate + 2, 2)
-
-                course_map = {}
-                for m in student_marks:
-                    cname = m.course.name if m.course else "Unknown"
-                    row_total = (
-                        (m.quiz1 or 0)
-                        + (m.quiz2 or 0)
-                        + (m.quiz3 or 0)
-                        + (m.attendance or 0)
-                        + (m.assignment or 0)
-                        + (m.presentation or 0)
-                        + (m.termexam or 0)
-                    ) / 7
-                    course_map.setdefault(cname, []).append(row_total)
-
-                for cname, vals in course_map.items():
-                    avg_course = round(sum(vals) / len(vals), 2)
-                    courses_list.append({"name": cname, "performance": avg_course})
-
-                for course_info in courses_list:
-                    ca = QuizAttendance.objects.filter(
-                        student=student_user, course__name=course_info["name"]
-                    )
-                    attendance_weeks = {}
-                    for week in range(1, 5):
-                        attended = ca.filter(week=week, attended=True).exists()
-                        attendance_weeks[f"Week {week}"] = (
-                            "✔️" if attended else "❌"
-                        )
-                    attendance_by_course[course_info["name"]] = attendance_weeks
-
-            students_map[student_info.email] = {
-                "name": student_info.student_name
-                or student_user.get_full_name()
-                or student_user.username,
-                "email": student_info.email,
-                "section": section.section_name,
-                "semester": section.semester,
-                "course": section.course.name,
-                "total": performance_rate,
-                "predicted": predicted_performance,
-                "completed_quizzes": completed_quizzes,
-                "improvement_rate": improvement_rate,
-                "courses": courses_list,
-                "attendance_by_course": attendance_by_course,
-            }
-
-    students_data = list(students_map.values())
-    students_data = sorted(students_data, key=lambda x: x["name"].lower())
 
     context = {
-        "username": user.username,
-        "students_data": students_data,
+        "username": request.user.username,
+        "sections": sections
     }
 
-    return render(request, "accounts/teacher_view_performance.html", context)
+    return render(
+        request,
+        "accounts/teacher_view_performance.html",
+        context
+    )
 
+@login_required(login_url='/accounts/login-page/')
+def teacher_student_list(request, section_id):
+
+    section = Section.objects.get(
+        id=section_id,
+        teacher=request.user
+    )
+
+    students = section.students.all()
+
+    return render(
+        request,
+        "accounts/student_list_modal.html",
+        {
+            "section": section,
+            "students": students
+        }
+    )
+
+import json
+
+@login_required(login_url='/accounts/login-page/')
+def student_performance_detail(request, email, course_id):
+
+    student = User.objects.get(
+        email=email
+    )
+
+    course = Course.objects.get(
+        id=course_id
+    )
+    # ==========================
+    # Offline Performance
+    # ==========================
+
+    marks = Marks.objects.filter(
+        student=student,
+        course=course
+    ).select_related(
+        "course"
+    )
+    # ==========================
+    # Online AI Performance
+    # (ONLY THIS COURSE)
+    # ==========================
+
+    ai_attempts_queryset = AIQuizAttempt.objects.filter(
+        student=student,
+        course=course
+    ).order_by(
+        #"topic_name",
+        "created_at"
+    )
+
+    total_ai_attempts = ai_attempts_queryset.count()
+
+    if total_ai_attempts > 0:
+
+        avg_ai_score = round(
+            sum(
+                attempt.percentage()
+                for attempt in ai_attempts_queryset
+            )
+            /
+            total_ai_attempts,
+            2
+        )
+        latest_ai = ai_attempts_queryset.last()
+
+    else:
+
+        avg_ai_score = 0
+        latest_ai = None
+
+    # AI Learning Trend (Grouped by Topic)
+    # ==========================
+
+    from collections import defaultdict
+    learning_trend = defaultdict(list)
+    
+    for attempt in ai_attempts_queryset:
+        learning_trend[
+            attempt.topic_name or "General"
+            ].append({
+                 "score": attempt.percentage(),
+                 "date": attempt.created_at.strftime("%Y-%m-%d %H:%M:%S")
+                })    
+
+    print("======== LEARNING TREND ========")
+    print(dict(learning_trend))
+    print("================================")
+    # ==========================
+    # Course Wise Combined Result
+    # Offline + AI
+    # ==========================
+
+    course_scores = []
+
+    # Offline score
+
+    for mark in marks:
+
+        offline_average = (
+
+            mark.quiz1 +
+            mark.quiz2 +
+            mark.quiz3 +
+            mark.assignment +
+            mark.presentation +
+            mark.termexam
+
+        ) / 6
+        course_scores.append(
+            offline_average
+        )
+    # AI score
+
+    for attempt in ai_attempts_queryset:
+
+        course_scores.append(
+            attempt.percentage()
+        )
+    if course_scores:
+
+        combined_average = round(
+            sum(course_scores) /
+            len(course_scores),
+            2
+        )
+
+    else:
+
+        combined_average = 0
+
+    course_wise_result = [
+
+        {
+            "course": course.name,
+            "average": combined_average
+        }
+
+    ]
+
+    context = {
+
+        "student": student,
+        # Offline
+        "marks": marks,
+        # AI Online
+        "ai_attempts": total_ai_attempts,
+        "avg_ai_score": avg_ai_score,
+        "latest_ai": latest_ai,
+        # Chart data
+        "learning_trend": json.dumps(dict(learning_trend)),
+        # Combined
+        "course_wise_result": course_wise_result,
+    }
+    return render(
+        request,
+        "accounts/student_performance_modal.html",
+        context
+    )
 #----------------------
 @login_required(login_url='/accounts/login-page/')
 def teacher_upload_syllabus(request):
@@ -2204,11 +2790,110 @@ def teacher_upload_syllabus(request):
 @login_required(login_url='/accounts/login-page/')
 def student_view_syllabus(request):
     user = request.user
-    student_courses = UserCourse.objects.filter(user=user).values_list("course", flat=True)
+    assigned_sections = sync_student_courses_from_teacher_uploads(user)
 
-    syllabus_uploads = TeacherSyllabusUpload.objects.filter(course__id__in=student_courses)
+    syllabus_uploads = TeacherSyllabusUpload.objects.none()
+    for section in assigned_sections:
+        section_uploads = TeacherSyllabusUpload.objects.filter(
+            teacher=section.teacher,
+            semester=section.semester,
+            course=section.course,
+            section=section.section_name,
+        )
+        syllabus_uploads = syllabus_uploads | section_uploads
+
+    syllabus_uploads = syllabus_uploads.select_related("teacher", "course").order_by(
+        "-uploaded_at"
+    )
 
     return render(request, "accounts/student_view_syllabus.html", {
         "syllabus": syllabus_uploads,
         "username": user.username
     })
+
+@login_required(login_url='/accounts/login-page/')
+def teacher_my_syllabus(request):
+
+    syllabi = TeacherSyllabusUpload.objects.filter(
+        teacher=request.user
+    ).select_related(
+        "course"
+    ).order_by("-uploaded_at")
+
+    return render(
+        request,
+        "accounts/teacher_my_syllabus.html",
+        {
+            "username": request.user.username,
+            "syllabi": syllabi,
+        },
+    )
+
+#---teacher notifications---
+@login_required(login_url='/accounts/login-page/')
+def teacher_notifications(request):
+
+    notifications = TeacherNotification.objects.filter(
+        teacher=request.user
+    ).order_by('-created_at')
+
+    unread_notifications = notifications.filter(is_read=False)
+    unread_notifications.update(is_read=True)
+
+    context = {
+        "notifications": notifications
+    }
+    return render(
+        request,
+        "accounts/teacher_notifications.html",
+        context
+    )
+
+#----------------------
+def detect_weak_topics(student, course):
+
+    attempts = AIQuizAttempt.objects.filter(
+        student=student,
+        course=course
+    )
+
+
+    topic_scores = {}
+
+
+    for attempt in attempts:
+
+        topic = attempt.topic_name or "General"
+
+        percentage = attempt.percentage()
+
+
+        if topic not in topic_scores:
+            topic_scores[topic] = []
+
+
+        topic_scores[topic].append(
+            percentage
+        )
+
+
+    weak_topics = []
+
+
+    for topic, scores in topic_scores.items():
+
+        average = round(
+            sum(scores) / len(scores),
+            2
+        )
+
+
+        if average < 50:
+
+            weak_topics.append({
+                "topic": topic,
+                "average": average
+            })
+
+
+    return weak_topics
